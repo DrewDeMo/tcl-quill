@@ -1,9 +1,13 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, IconButton, Switch, Box, Button } from '@mui/material';
+import { AppBar, Toolbar, Typography, IconButton, Switch, Box, Button, Avatar } from '@mui/material';
 import { Brightness4 as DarkModeIcon, Brightness7 as LightModeIcon } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../firebase';
 
 const Header = ({ darkMode, toggleDarkMode }) => {
+  const [user] = useAuthState(auth);
+
   return (
     <AppBar position="static" className="header">
       <Toolbar>
@@ -14,13 +18,17 @@ const Header = ({ darkMode, toggleDarkMode }) => {
           <Button color="inherit" component={Link} to="/">Dashboard</Button>
           <Button color="inherit" component={Link} to="/projections">Projections</Button>
           <Button color="inherit" component={Link} to="/data">Data Management</Button>
-          <Button color="inherit" component={Link} to="/profile">Profile</Button>
         </Box>
         <div className="project-icons">
           <IconButton color="inherit" onClick={toggleDarkMode}>
             {darkMode ? <DarkModeIcon /> : <LightModeIcon />}
           </IconButton>
           <Switch checked={darkMode} onChange={toggleDarkMode} />
+          {user && (
+            <IconButton color="inherit" component={Link} to="/profile">
+              <Avatar alt={user.displayName || 'User'} src={user.photoURL || '/default-avatar.png'} />
+            </IconButton>
+          )}
         </div>
       </Toolbar>
     </AppBar>
