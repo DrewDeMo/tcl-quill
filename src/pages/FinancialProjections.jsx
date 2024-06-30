@@ -1,187 +1,224 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Grid } from '@mui/material';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import Papa from 'papaparse';
+import { Typography, Paper, Grid, CircularProgress, Box, TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '../firebase';
+import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
+import { exportToCSV } from '../utils/exportData';
 import dayjs from 'dayjs';
-import { calculateTotals, calculateProjections, calculateKPIs } from '../utils/calculations';
-import DataInputForm from '../components/DataInputForm';
-import ExportButton from '../components/ExportButton';
-import DateRangeSelector from '../components/DateRangeSelector';
 
 function FinancialProjections() {
+  const [user] = useAuthState(auth);
   const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
   const [projections, setProjections] = useState([]);
-  const [totals, setTotals] = useState({});
-  const [kpis, setKPIs] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [growthRate, setGrowthRate] = useState(5);
+  const [projectionMonths, setProjectionMonths] = useState(12);
 
   useEffect(() => {
     const loadData = async () => {
-      const storedData = localStorage.getItem('financialData');
-      if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        setData(parsedData);
-        setFilteredData(parsedData);
-        updateCalculations(parsedData);
-      } else {
-        const response = await fetch('/src/data/sampleData.csv');
-        const reader = response.body.getReader();
-        const result = await reader.read();
-        const decoder = new TextDecoder('utf-8');
-        const csv = decoder.decode(result.value);
-        const results = Papa.parse(csv, { header: true });
-        setData(results.data);
-        setFilteredData(results.data);
-        updateCalculations(results.data);
-        localStorage.setItem('financialData', JSON.stringify(results.data));
+      if (user) {
+        try {
+          setLoading(true);
+          const userDocRef = doc(collection(db, 'users'), user.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setData(userData.financialData || []);
+          }
+          setError(null);
+        } catch (err) {
+          console.error("Error loading data:", err);
+          setError("Failed to load data. Please try again.");
+        } finally {
+          setLoading(false);
+        }
       }
     };
 
     loadData();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    filterData();
-  }, [startDate, endDate, data]);
+    if (data.length > 0) {
+      generateProjections();
+    }
+  }, [data, growthRate, projectionMonths]);
 
-  const updateCalculations = (newData) => {
-    const calculatedTotals = calculateTotals(newData);
-    setTotals(calculatedTotals);
+  const generateProjections = () => {
+    const lastMonth = data[data.length - 1];
+    const projectedData = [];
 
-    const calculatedProjections = calculateProjections(newData);
-    setProjections(calculatedProjections);
-
-    const calculatedKPIs = calculateKPIs(newData);
-    setKPIs(calculatedKPIs);
-  };
-
-  const handleNewData = (newData) => {
-    const updatedData = [...data, newData];
-    setData(updatedData);
-    updateCalculations(updatedData);
-    localStorage.setItem('financialData', JSON.stringify(updatedData));
-  };
-
-  const filterData = () => {
-    if (!startDate && !endDate) {
-      setFilteredData(data);
-      return;
+    for (let i = 1; i <= projectionMonths; i++) {
+      const projectedMonth = {
+        Month: dayjs(lastMonth.Month, 'MMMM YYYY').add(i, 'month').format('MMMM YYYY'),
+        'Total Income': (parseFloat(lastMonth['Total Income']) * (1 + growthRate / 100) ** i).toFixed(2),
+        'Total Expense': (parseFloat(lastMonth['Total Expense']) * (1 + growthRate / 100) ** i).toFixed(2),
+      };
+      projectedMonth['Net Income'] = (parseFloat(projectedMonth['Total Income']) - parseFloat(projectedMonth['Total Expense'])).toFixed(2);
+      projectedData.push(projectedMonth);
     }
 
-    const filtered = data.filter((item) => {
-      const itemDate = dayjs(item.Month);
-      const isAfterStart = startDate ? itemDate.isAfter(startDate) || itemDate.isSame(startDate) : true;
-      const isBeforeEnd = endDate ? itemDate.isBefore(endDate) || itemDate.isSame(endDate) : true;
-      return isAfterStart && isBeforeEnd;
-    });
-
-    setFilteredData(filtered);
-    updateCalculations(filtered);
+    setProjections(projectedData);
   };
 
-  const combinedData = [...filteredData, ...projections];
+  const handleGrowthRateChange = (event) => {
+    setGrowthRate(parseFloat(event.target.value));
+  };
+
+  const handleProjectionMonthsChange = (event) => {
+    setProjectionMonths(parseInt(event.target.value));
+  };
+
+  const handleExportToCSV = () => {
+    exportToCSV(combinedData, 'financial_projections');
+  };
+
+  const calculateBreakEven = () => {
+    if (data.length === 0) return null;
+
+    const lastMonth = data[data.length - 1];
+    const fixedCosts = parseFloat(lastMonth['Total Expense']) * 0.7; // Assuming 70% of expenses are fixed
+    const variableCostsPerUnit = parseFloat(lastMonth['Total COGS']) / parseFloat(lastMonth['Total Income']);
+    const pricePerUnit = 1; // Assuming price per unit is 1 for simplicity
+
+    const breakEvenUnits = fixedCosts / (pricePerUnit - variableCostsPerUnit);
+    const breakEvenRevenue = breakEvenUnits * pricePerUnit;
+
+    return {
+      units: breakEvenUnits.toFixed(2),
+      revenue: breakEvenRevenue.toFixed(2),
+    };
+  };
+
+  const combinedData = [...data, ...projections];
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
-    <div className="p-4">
-      <Typography variant="h4" gutterBottom>
+    <Box sx={{ p: 4 }}>
+      <Typography variant="h4" gutterBottom fontWeight={300}>
         Financial Projections
       </Typography>
-      <Grid container spacing={3}>
+      {error && (
+        <Typography color="error" gutterBottom>
+          {error}
+        </Typography>
+      )}
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              fullWidth
+              label="Growth Rate (%)"
+              type="number"
+              value={growthRate}
+              onChange={handleGrowthRateChange}
+              inputProps={{ min: -100, max: 100, step: 0.1 }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <TextField
+              fullWidth
+              label="Projection Months"
+              type="number"
+              value={projectionMonths}
+              onChange={handleProjectionMonthsChange}
+              inputProps={{ min: 1, max: 120, step: 1 }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button variant="contained" color="primary" onClick={generateProjections}>
+              Generate Projections
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button variant="outlined" color="primary" onClick={handleExportToCSV}>
+              Export to CSV
+            </Button>
+          </Grid>
+        </Grid>
+      </Paper>
+      <Grid container spacing={4}>
         <Grid item xs={12}>
-          <DateRangeSelector
-            startDate={startDate}
-            endDate={endDate}
-            onStartDateChange={(date) => setStartDate(date)}
-            onEndDateChange={(date) => setEndDate(date)}
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <DataInputForm onSubmit={handleNewData} />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Paper className="p-4">
-            <Typography variant="h6" gutterBottom>
-              Key Performance Indicators
-            </Typography>
-            <Typography>Gross Profit Margin: {kpis.grossProfitMargin}%</Typography>
-            <Typography>Net Profit Margin: {kpis.netProfitMargin}%</Typography>
-            <Typography>Operating Expense Ratio: {kpis.operatingExpenseRatio}%</Typography>
-            <Typography>Revenue Growth Rate: {kpis.revenueGrowthRate}%</Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Paper className="p-4">
-            <Typography variant="h6" gutterBottom>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom fontWeight={600}>
               Income and Expense Projections
             </Typography>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={400}>
               <LineChart data={combinedData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="Month" />
                 <YAxis />
-                <Tooltip />
+                <Tooltip formatter={(value) => value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} />
                 <Legend />
                 <Line type="monotone" dataKey="Total Income" stroke="#8884d8" />
                 <Line type="monotone" dataKey="Total Expense" stroke="#82ca9d" />
+                <Line type="monotone" dataKey="Net Income" stroke="#ffc658" />
               </LineChart>
             </ResponsiveContainer>
           </Paper>
         </Grid>
-        <Grid item xs={12} md={6}>
-          <Paper className="p-4">
-            <Typography variant="h6" gutterBottom>
-              Profit Breakdown
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom fontWeight={600}>
+              Projection Data
             </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={combinedData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Month" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="Gross Profit" fill="#8884d8" />
-                <Bar dataKey="Net Income" fill="#82ca9d" />
-              </BarChart>
-            </ResponsiveContainer>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Month</TableCell>
+                    <TableCell align="right">Total Income</TableCell>
+                    <TableCell align="right">Total Expense</TableCell>
+                    <TableCell align="right">Net Income</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {projections.map((row, index) => (
+                    <TableRow key={index}>
+                      <TableCell component="th" scope="row">
+                        {row.Month}
+                      </TableCell>
+                      <TableCell align="right">{parseFloat(row['Total Income']).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                      <TableCell align="right">{parseFloat(row['Total Expense']).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                      <TableCell align="right">{parseFloat(row['Net Income']).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </Paper>
         </Grid>
         <Grid item xs={12}>
-          <TableContainer component={Paper}>
-            <Table sx={{ minWidth: 650 }} aria-label="financial projections table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Month</TableCell>
-                  <TableCell align="right">Total Income</TableCell>
-                  <TableCell align="right">Total COGS</TableCell>
-                  <TableCell align="right">Gross Profit</TableCell>
-                  <TableCell align="right">Total Expense</TableCell>
-                  <TableCell align="right">Net Income</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {combinedData.map((row, index) => (
-                  <TableRow key={`${row.Month}-${index}`}>
-                    <TableCell component="th" scope="row">
-                      {row.Month}
-                    </TableCell>
-                    <TableCell align="right">{row['Total Income']}</TableCell>
-                    <TableCell align="right">{row['Total COGS']}</TableCell>
-                    <TableCell align="right">{row['Gross Profit']}</TableCell>
-                    <TableCell align="right">{row['Total Expense']}</TableCell>
-                    <TableCell align="right">{row['Net Income']}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Grid>
-        <Grid item xs={12}>
-          <ExportButton data={combinedData} fileName="financial_projections.csv" />
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom fontWeight={600}>
+              Break-Even Analysis
+            </Typography>
+            {calculateBreakEven() ? (
+              <>
+                <Typography>Break-Even Units: {calculateBreakEven().units}</Typography>
+                <Typography>Break-Even Revenue: {parseFloat(calculateBreakEven().revenue).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</Typography>
+              </>
+            ) : (
+              <Typography>Insufficient data for break-even analysis</Typography>
+            )}
+          </Paper>
         </Grid>
       </Grid>
-    </div>
+    </Box>
   );
 }
 

@@ -1,3 +1,25 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+body {
+    font-family: 'Source Sans Pro', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+  
+  .MuiButton-root {
+    text-transform: none !important;
+  }
+  
+  .MuiPaper-root {
+    transition: all 0.3s ease;
+  }
+  
+  .MuiTableCell-root {
+    transition: background-color 0.3s ease;
+  }
+  
+  .MuiTableCell-root:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
