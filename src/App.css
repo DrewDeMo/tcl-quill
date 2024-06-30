@@ -94,6 +94,8 @@ html, body, #root, .App {
   padding: 16px 32px;
   background-color: #cc5500; /* Company color */
   transition: padding 0.3s ease;
+  border: none; /* Remove any borders */
+  box-shadow: none; /* Remove any shadows */
 }
 
 .header.scrolled {
@@ -147,4 +149,20 @@ body[data-theme='dark'] .MuiButton-root {
 
 body[data-theme='dark'] .MuiTypography-root {
   color: #ffffff; /* White text */
+}
+
+/* Light theme specific styles */
+body[data-theme='light'] .MuiPaper-root {
+  background-color: #ffffff; /* Light paper */
+  color: #000000; /* Black text */
+  border: 1px solid rgba(0, 0, 0, 0.12); /* Subtle border */
+  border-radius: 0; /* Remove rounded borders */
+}
+
+body[data-theme='light'] .MuiButton-root {
+  color: #000000; /* Black text */
+}
+
+body[data-theme='light'] .MuiTypography-root {
+  color: #000000; /* Black text */
 }

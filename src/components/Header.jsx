@@ -34,7 +34,7 @@ function Header({ darkMode, toggleDarkMode }) {
   }, []);
 
   return (
-    <AppBar position="fixed">
+    <AppBar position="fixed" style={{ backgroundColor: '#cc5500', boxShadow: 'none' }}>
       <Toolbar className={`header ${scrolled ? 'scrolled' : ''}`}>
         <Typography variant="h6" component="div" className="project-title">
           TCL Marketing
