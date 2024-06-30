@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, Grid, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Tooltip, Box } from '@mui/material';
-import { Trash2, Edit, Save, X as Cancel, Plus, RefreshCcw, ChevronUp, ChevronDown } from 'react-feather';
+import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, Grid, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Tooltip, Box, useTheme } from '@mui/material';
+import { Trash2, Edit, Save, X as Cancel, Plus, RefreshCcw, ChevronUp, ChevronDown, DollarSign, Calendar } from 'react-feather';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
@@ -22,6 +22,7 @@ const StyledIconButton = styled(IconButton)(({ theme }) => ({
 }));
 
 const DataManagement = () => {
+  const theme = useTheme();
   const [user] = useAuthState(auth);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -251,8 +252,8 @@ const DataManagement = () => {
   }
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom fontWeight={300}>
+    <Box sx={{ p: 4 }} className="fade-in">
+      <Typography variant="h4" gutterBottom fontWeight={700} color="text.primary">
         Financial Data Management
       </Typography>
       {error && (
@@ -260,12 +261,12 @@ const DataManagement = () => {
           {error}
         </Typography>
       )}
-      <Paper sx={{ p: 3, mb: 4 }}>
+      <Paper sx={{ p: 3, mb: 4, background: theme.palette.background.paper }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item>
             <Button
               variant="contained"
-              color="secondary"
+              color="primary"
               startIcon={<RefreshCcw />}
               onClick={handleGenerateFakeData}
             >
@@ -284,7 +285,7 @@ const DataManagement = () => {
           </Grid>
         </Grid>
       </Paper>
-      <Paper sx={{ p: 3, mb: 4 }}>
+      <Paper sx={{ p: 3, mb: 4, background: theme.palette.background.paper }}>
         <Typography variant="h6" gutterBottom fontWeight={600}>
           Add New Entry
         </Typography>
@@ -298,6 +299,10 @@ const DataManagement = () => {
                 value={newEntry[key]}
                 onChange={handleInputChange}
                 type={key === 'Month' ? 'text' : 'number'}
+                InputProps={{
+                  startAdornment: key === 'Month' ? <Calendar size={20} color={theme.palette.text.secondary} style={{ marginRight: 8 }} /> :
+                    <DollarSign size={20} color={theme.palette.text.secondary} style={{ marginRight: 8 }} />,
+                }}
               />
             </Grid>
           ))}
@@ -313,7 +318,7 @@ const DataManagement = () => {
           </Grid>
         </Grid>
       </Paper>
-      <Paper sx={{ p: 3 }}>
+      <Paper sx={{ p: 3, background: theme.palette.background.paper }}>
         <TableContainer>
           <Table>
             <TableHead>
@@ -333,7 +338,7 @@ const DataManagement = () => {
             </TableHead>
             <TableBody>
               {sortedData.map((row, index) => (
-                <TableRow key={index}>
+                <TableRow key={index} sx={{ '&:nth-of-type(odd)': { backgroundColor: theme.palette.action.hover } }}>
                   {Object.entries(row).map(([key, value]) => (
                     <StyledTableCell key={key}>
                       {editingIndex === index ? (
@@ -343,6 +348,10 @@ const DataManagement = () => {
                           value={newEntry[key]}
                           onChange={handleInputChange}
                           type={key === 'Month' ? 'text' : 'number'}
+                          InputProps={{
+                            startAdornment: key === 'Month' ? <Calendar size={20} color={theme.palette.text.secondary} style={{ marginRight: 8 }} /> :
+                              <DollarSign size={20} color={theme.palette.text.secondary} style={{ marginRight: 8 }} />,
+                          }}
                         />
                       ) : (
                         key === 'Month' ? value : parseFloat(value).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
@@ -400,7 +409,7 @@ const DataManagement = () => {
           <Button onClick={() => setOpenClearDialog(false)} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleClearData} color="secondary" autoFocus>
+          <Button onClick={handleClearData} color="error" autoFocus>
             Clear All Data
           </Button>
         </DialogActions>
