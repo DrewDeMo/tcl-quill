@@ -4,6 +4,17 @@ import { Sun, Moon, User } from 'react-feather';
 import { Link } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from './firebase';
+// vite.config.js
+
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  esbuild: {
+    jsxFactory: 'h', // Optional: Specify your JSX factory function if needed
+    jsxFragment: 'Fragment', // Optional: Specify your JSX fragment if needed
+  },
+});
+
 
 const Header = ({ darkMode, toggleDarkMode }) => {
   const [user] = useAuthState(auth);
