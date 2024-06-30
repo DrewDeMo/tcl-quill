@@ -218,11 +218,7 @@ body[data-theme='light'] .MuiTypography-root {
 }
 
 /* Override Material-UI specific classes */
-.css-1s8xpon, .css-kzyt4a,.css-wr9siz,  {
+body[data-theme=light] .MuiPaper-root  {
   box-shadow: none !important;
 }
 
-
-.MuiGrid-root{
-  box-shadow: none !important;
-}
