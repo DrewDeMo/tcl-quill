@@ -8,7 +8,6 @@
   --background-dark: #121212;
   --text-light: #ffffff;
   --text-dark: #000000;
-  --border-radius: 8px;
   --light-grey: #e0e0e0;
 }
 
@@ -29,7 +28,6 @@ body {
 .card {
   padding: 2em;
   background: var(--background-light);
-  border-radius: var(--border-radius);
   box-shadow: none;
   margin: 16px 0;
 }
@@ -159,3 +157,10 @@ body[data-theme=light] .MuiPaper-root  {
   box-shadow: none !important;
 }
 
+@media (min-width: 1024px) {
+  .css-s43fis{
+    width: 100%;
+  }
+
+
+}
