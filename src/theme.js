@@ -2,11 +2,16 @@ import { createTheme } from '@mui/material/styles';
 
 const commonSettings = {
   typography: {
-    fontFamily: 'Roboto, Arial, sans-serif',
+    fontFamily: 'Source Sans Pro, Arial, sans-serif',
+    fontWeightThin: 100,
+    fontWeightExtraLight: 200,
     fontWeightLight: 300,
     fontWeightRegular: 400,
     fontWeightMedium: 500,
+    fontWeightSemiBold: 600,
     fontWeightBold: 700,
+    fontWeightExtraBold: 800,
+    fontWeightBlack: 900,
   },
   components: {
     MuiButton: {
@@ -29,8 +34,32 @@ const commonSettings = {
     },
     MuiTypography: {
       styleOverrides: {
-        h6: {
+        h1: {
+          fontWeight: 900,
+        },
+        h2: {
+          fontWeight: 800,
+        },
+        h3: {
           fontWeight: 700,
+        },
+        h4: {
+          fontWeight: 600,
+        },
+        h5: {
+          fontWeight: 500,
+        },
+        h6: {
+          fontWeight: 400,
+        },
+        body1: {
+          fontWeight: 300,
+        },
+        body2: {
+          fontWeight: 200,
+        },
+        caption: {
+          fontWeight: 100,
         },
       },
     },
