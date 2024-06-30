@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
-import { TextField, Button, Typography, Paper } from '@mui/material';
+import { TextField, Button, Typography, Paper, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 function SignUp() {
@@ -27,44 +27,46 @@ function SignUp() {
   };
 
   return (
-    <Paper className="p-4 max-w-md mx-auto">
-      <Typography variant="h5" gutterBottom>
-        Sign Up
-      </Typography>
-      {error && (
-        <Typography color="error" gutterBottom>
-          {error}
-        </Typography>
-      )}
-      {success && (
-        <Typography color="success" gutterBottom>
-          Account created successfully! Redirecting...
-        </Typography>
-      )}
-      <form onSubmit={handleSignUp}>
-        <TextField
-          fullWidth
-          label="Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          margin="normal"
-          required
-        />
-        <TextField
-          fullWidth
-          label="Password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          margin="normal"
-          required
-        />
-        <Button type="submit" variant="contained" color="primary" fullWidth>
+    <Box sx={{ p: 4 }}>
+      <Paper className="p-4 max-w-md mx-auto" sx={{ p: 3, borderRadius: 'var(--border-radius)' }}>
+        <Typography variant="h5" gutterBottom fontWeight={500}>
           Sign Up
-        </Button>
-      </form>
-    </Paper>
+        </Typography>
+        {error && (
+          <Typography color="error" gutterBottom>
+            {error}
+          </Typography>
+        )}
+        {success && (
+          <Typography color="success" gutterBottom>
+            Account created successfully! Redirecting...
+          </Typography>
+        )}
+        <form onSubmit={handleSignUp}>
+          <TextField
+            fullWidth
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            margin="normal"
+            required
+          />
+          <TextField
+            fullWidth
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            margin="normal"
+            required
+          />
+          <Button type="submit" variant="contained" color="primary" fullWidth>
+            Sign Up
+          </Button>
+        </form>
+      </Paper>
+    </Box>
   );
 }
 

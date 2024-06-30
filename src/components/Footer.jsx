@@ -1,15 +1,14 @@
 import React from 'react';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
+import { Typography, Box } from '@mui/material';
 
-function Footer() {
+const Footer = () => {
   return (
-    <Box component="footer" sx={{ bgcolor: 'background.paper', py: 6 }}>
-      <Typography variant="body2" color="text.secondary" align="center">
-        © {new Date().getFullYear()} TCL Marketing. All rights reserved.
+    <Box className="footer" sx={{ p: 2, backgroundColor: 'var(--primary-color)', color: 'var(--secondary-color)' }}>
+      <Typography variant="body2" align="center">
+        &copy; {new Date().getFullYear()} Financial Projection App. All rights reserved.
       </Typography>
     </Box>
   );
-}
+};
 
 export default Footer;
