@@ -162,10 +162,7 @@ body[data-theme='dark'] .MuiTypography-root {
 }
 
 body[data-theme='light'] .MuiPaper-root {
-  background-color: var(--secondary-color);
-  color: var(--text-dark);
-  border: 1px solid var(--light-grey);
-  border-radius: var(--border-radius);
+
 }
 
 body[data-theme='light'] .MuiButton-root {
