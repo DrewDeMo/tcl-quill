@@ -99,6 +99,23 @@ html, body, #root, .App {
   box-shadow: none;
 }
 
+.header .project-links {
+  display: flex;
+  align-items: center;
+}
+
+.header .project-links a {
+  margin: 0 16px;
+  text-decoration: none;
+  color: var(--secondary-color);
+  font-weight: 500;
+}
+
+.header .project-links a:hover {
+  text-decoration: underline;
+}
+
+
 .header.scrolled {
   padding: 8px 16px;
 }
