@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { IconButton } from '@mui/material';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from './firebase.js';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -17,7 +14,7 @@ import DataManagement from './pages/DataManagement.jsx';
 import SignUp from './components/SignUp.jsx';
 import SignIn from './components/SignIn.jsx';
 import UserProfile from './components/UserProfile.jsx';
-import theme from './theme.js';
+import { lightTheme, darkTheme } from './theme.js';
 import './App.css'; // Add this line to include custom CSS
 
 function App() {
@@ -28,13 +25,7 @@ function App() {
     setDarkMode(!darkMode);
   };
 
-  const appliedTheme = {
-    ...theme,
-    palette: {
-      ...theme.palette,
-      mode: darkMode ? 'dark' : 'light',
-    },
-  };
+  const appliedTheme = darkMode ? darkTheme : lightTheme;
 
   return (
     <ThemeProvider theme={appliedTheme}>
