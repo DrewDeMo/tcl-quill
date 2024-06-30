@@ -3,7 +3,7 @@ import { AppBar, Toolbar, Typography, IconButton, Box, Button, Avatar } from '@m
 import { Sun, Moon, User } from 'react-feather';
 import { Link } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../firebase';
+import { auth } from './firebase';
 
 const Header = ({ darkMode, toggleDarkMode }) => {
   const [user] = useAuthState(auth);
