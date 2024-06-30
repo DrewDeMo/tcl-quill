@@ -34,7 +34,7 @@ function Header({ darkMode, toggleDarkMode }) {
   }, []);
 
   return (
-    <AppBar position="static">
+    <AppBar position="fixed">
       <Toolbar className={`header ${scrolled ? 'scrolled' : ''}`}>
         <Typography variant="h6" component="div" className="project-title">
           TCL Marketing
