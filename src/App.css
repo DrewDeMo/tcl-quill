@@ -114,3 +114,22 @@ html, body, #root, .App {
 .header .MuiIconButton-root:hover {
   transform: scale(1.1);
 }
+
+/* Dark theme specific styles */
+body[data-theme='dark'] {
+  background-color: #121212; /* Dark background */
+  color: #ffffff; /* White text */
+}
+
+body[data-theme='dark'] .MuiPaper-root {
+  background-color: #1e1e1e; /* Dark paper */
+  color: #ffffff; /* White text */
+}
+
+body[data-theme='dark'] .MuiButton-root {
+  color: #ffffff; /* White text */
+}
+
+body[data-theme='dark'] .MuiTypography-root {
+  color: #ffffff; /* White text */
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -24,6 +24,10 @@ function App() {
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
   };
+
+  useEffect(() => {
+    document.body.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+  }, [darkMode]);
 
   const appliedTheme = darkMode ? darkTheme : lightTheme;
 
