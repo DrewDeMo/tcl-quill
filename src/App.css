@@ -1,3 +1,4 @@
+/* src/App.css */
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -39,4 +40,19 @@
 
 .read-the-docs {
   color: #888;
+}
+
+/* Hide project title and only show icons on mobile */
+@media (max-width: 600px) {
+  .project-title {
+    display: none;
+  }
+  .project-icons {
+    display: flex;
+  }
+}
+
+/* Additional styles for the dark and light theme icon */
+.theme-toggle-icon {
+  margin-left: 16px; /* Adjust the margin as needed */
 }

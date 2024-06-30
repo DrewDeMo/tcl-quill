@@ -15,39 +15,41 @@ function Header() {
   return (
     <AppBar position="static">
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }} className="project-title">
           TCL Marketing
         </Typography>
-        {user ? (
-          <>
-            <Button color="inherit" component={Link} to="/">
-              Dashboard
-            </Button>
-            <Button color="inherit" component={Link} to="/projections">
-              Financial Projections
-            </Button>
-            <Button color="inherit" component={Link} to="/data">
-              Data Management
-            </Button>
-            <IconButton
-              color="inherit"
-              component={Link}
-              to="/profile"
-              aria-label="user profile"
-            >
-              <AccountCircle />
-            </IconButton>
-          </>
-        ) : (
-          <>
-            <Button color="inherit" component={Link} to="/signin">
-              Sign In
-            </Button>
-            <Button color="inherit" component={Link} to="/signup">
-              Sign Up
-            </Button>
-          </>
-        )}
+        <div className="project-icons">
+          {user ? (
+            <>
+              <Button color="inherit" component={Link} to="/">
+                Dashboard
+              </Button>
+              <Button color="inherit" component={Link} to="/projections">
+                Financial Projections
+              </Button>
+              <Button color="inherit" component={Link} to="/data">
+                Data Management
+              </Button>
+              <IconButton
+                color="inherit"
+                component={Link}
+                to="/profile"
+                aria-label="user profile"
+              >
+                <AccountCircle />
+              </IconButton>
+            </>
+          ) : (
+            <>
+              <Button color="inherit" component={Link} to="/signin">
+                Sign In
+              </Button>
+              <Button color="inherit" component={Link} to="/signup">
+                Sign Up
+              </Button>
+            </>
+          )}
+        </div>
       </Toolbar>
     </AppBar>
   );

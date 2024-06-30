@@ -18,6 +18,7 @@ import SignUp from './components/SignUp.jsx';
 import SignIn from './components/SignIn.jsx';
 import UserProfile from './components/UserProfile.jsx';
 import theme from './theme.js';
+import './App.css'; // Add this line to include custom CSS
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -43,7 +44,8 @@ function App() {
           <div className="flex flex-col min-h-screen">
             <Header />
             <IconButton
-              sx={{ ml: 1, position: 'absolute', top: '10px', right: '10px' }}
+              className="theme-toggle-icon"
+              sx={{ ml: 2, position: 'absolute', top: '10px', right: '10px' }} // Adjusted margin
               onClick={toggleDarkMode}
               color="inherit"
             >
