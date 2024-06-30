@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AppBar, Toolbar, Typography, IconButton, Box, Button, Avatar } from '@mui/material';
-import { Sun, Moon, User } from 'react-feather';
+import { Sun, Moon, User } from 'react-feather'; // Import Feather Icons
 import { Link } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../firebase';
