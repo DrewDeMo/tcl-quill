@@ -152,41 +152,6 @@ body[data-theme='dark'] {
   font-weight: 600;
 }
 
-.MuiTypography-body1 {
-  font-weight: 300;
-}
-
-.MuiPaper-root {
-  padding: 16px;
-  border-radius: var(--border-radius);
-  box-shadow: none; /* Remove any box-shadow */
-}
-
-.MuiButton-root {
-  text-transform: none;
-  border-radius: var(--border-radius);
-}
-
-.MuiTable-root {
-  border-radius: var(--border-radius);
-}
-
-.MuiTableCell-root {
-  border-bottom: none;
-}
-
-.MuiTableHead-root {
-  background-color: var(--primary-color);
-  color: var(--secondary-color);
-}
-
-.MuiTableRow-root:nth-of-type(odd) {
-  background-color: rgba(0, 0, 0, 0.04);
-}
-
-.MuiTableRow-root:nth-of-type(even) {
-  background-color: rgba(0, 0, 0, 0.02);
-}
 
 /* Override Material-UI specific classes */
 body[data-theme=light] .MuiPaper-root  {
