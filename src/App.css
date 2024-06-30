@@ -86,6 +86,7 @@ html, body, #root, .App {
   position: sticky;
   top: 0;
   z-index: 1000;
+  box-shadow: none; /* Remove any box-shadow */
 }
 
 .header.scrolled {
@@ -189,6 +190,7 @@ body[data-theme='light'] .MuiTypography-root {
   padding: 16px;
   margin: 16px 0;
   border-radius: var(--border-radius);
+  box-shadow: none; /* Remove any box-shadow */
 }
 
 .MuiButton-root {
@@ -215,4 +217,9 @@ body[data-theme='light'] .MuiTypography-root {
 
 .MuiTableRow-root:nth-of-type(even) {
   background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Override Material-UI specific classes */
+.css-1s8xpon {
+  box-shadow: none !important;
 }
