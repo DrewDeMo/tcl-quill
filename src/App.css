@@ -153,25 +153,6 @@ body[data-theme='dark'] .MuiPaper-root {
   border-radius: var(--border-radius);
 }
 
-body[data-theme='dark'] .MuiButton-root {
-  color: var(--text-light);
-}
-
-body[data-theme='dark'] .MuiTypography-root {
-  color: var(--text-light);
-}
-
-body[data-theme='light'] .MuiPaper-root {
-
-}
-
-body[data-theme='light'] .MuiButton-root {
-  color: var(--text-dark);
-}
-
-body[data-theme='light'] .MuiTypography-root {
-  color: var(--text-dark);
-}
 
 /* Additional Global Styles */
 .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 {
