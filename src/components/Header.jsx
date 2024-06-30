@@ -14,11 +14,11 @@ function Header() {
 
   return (
     <AppBar position="static">
-      <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }} className="project-title">
+      <Toolbar className="header">
+        <Typography variant="h6" component="div" className="project-title">
           TCL Marketing
         </Typography>
-        <div className="project-icons hidden">
+        <div className="project-icons">
           {user ? (
             <>
               <Button color="inherit" component={Link} to="/">

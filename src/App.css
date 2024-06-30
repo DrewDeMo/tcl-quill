@@ -77,3 +77,26 @@ html, body, #root, .App {
 .flex-grow {
   flex-grow: 1;
 }
+
+/* Header styles for proper alignment and spacing */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.header .project-title {
+  flex-grow: 1;
+  text-align: left;
+}
+
+.header .project-icons {
+  display: flex;
+  align-items: center;
+}
+
+.header .project-icons button,
+.header .project-icons .MuiIconButton-root {
+  margin-left: 8px;
+}
