@@ -339,4 +339,74 @@ function DataManagement() {
                       {editingIndex === index ? (
                         <TextField
                           fullWidth
-                         
+                          name={key}
+                          value={newEntry[key]}
+                          onChange={handleInputChange}
+                          type={key === 'Month' ? 'text' : 'number'}
+                        />
+                      ) : (
+                        key === 'Month' ? value : parseFloat(value).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+                      )}
+                    </StyledTableCell>
+                  ))}
+                  <StyledTableCell>
+                    {editingIndex === index ? (
+                      <>
+                        <Tooltip title="Save">
+                          <StyledIconButton onClick={() => handleEditSave(index)} color="primary">
+                            <SaveIcon />
+                          </StyledIconButton>
+                        </Tooltip>
+                        <Tooltip title="Cancel">
+                          <StyledIconButton onClick={handleEditCancel} color="secondary">
+                            <CancelIcon />
+                          </StyledIconButton>
+                        </Tooltip>
+                      </>
+                    ) : (
+                      <>
+                        <Tooltip title="Edit">
+                          <StyledIconButton onClick={() => handleEditStart(index)} color="primary">
+                            <EditIcon />
+                          </StyledIconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <StyledIconButton onClick={() => handleDelete(index)} color="secondary">
+                            <DeleteIcon />
+                          </StyledIconButton>
+                        </Tooltip>
+                      </>
+                    )}
+                  </StyledTableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+      <Dialog
+        open={openClearDialog}
+        onClose={() => setOpenClearDialog(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Clear all data?"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to clear all financial data? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenClearDialog(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleClearData} color="secondary" autoFocus>
+            Clear All Data
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+}
+
+export default DataManagement;
