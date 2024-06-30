@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, Grid, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Tooltip, Box } from '@mui/material';
-import { Delete as DeleteIcon, Edit as EditIcon, Save as SaveIcon, Cancel as CancelIcon, Add as AddIcon, Refresh as RefreshIcon, Clear as ClearIcon, ArrowUpward as ArrowUpwardIcon, ArrowDownward as ArrowDownwardIcon } from '@mui/icons-material';
+import { Delete, Edit, Save, Cancel, Plus, RefreshCcw, Trash2, ChevronUp, ChevronDown } from 'react-feather';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
@@ -21,7 +21,7 @@ const StyledIconButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
-function DataManagement() {
+const DataManagement = () => {
   const [user] = useAuthState(auth);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -266,7 +266,7 @@ function DataManagement() {
             <Button
               variant="contained"
               color="secondary"
-              startIcon={<RefreshIcon />}
+              startIcon={<RefreshCcw />}
               onClick={handleGenerateFakeData}
             >
               Generate 5 Years of Fake Data
@@ -276,7 +276,7 @@ function DataManagement() {
             <Button
               variant="outlined"
               color="error"
-              startIcon={<ClearIcon />}
+              startIcon={<Trash2 />}
               onClick={() => setOpenClearDialog(true)}
             >
               Clear All Data
@@ -305,7 +305,7 @@ function DataManagement() {
             <Button
               variant="contained"
               color="primary"
-              startIcon={<AddIcon />}
+              startIcon={<Plus />}
               onClick={handleAddEntry}
             >
               Add Entry
@@ -323,7 +323,7 @@ function DataManagement() {
                     <Box sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }} onClick={() => handleSort(key)}>
                       {key}
                       {sortConfig.key === key && (
-                        sortConfig.direction === 'ascending' ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
+                        sortConfig.direction === 'ascending' ? <ChevronUp size={16} /> : <ChevronDown size={16} />
                       )}
                     </Box>
                   </StyledTableCell>
@@ -354,12 +354,12 @@ function DataManagement() {
                       <>
                         <Tooltip title="Save">
                           <StyledIconButton onClick={() => handleEditSave(index)} color="primary">
-                            <SaveIcon />
+                            <Save />
                           </StyledIconButton>
                         </Tooltip>
                         <Tooltip title="Cancel">
                           <StyledIconButton onClick={handleEditCancel} color="secondary">
-                            <CancelIcon />
+                            <Cancel />
                           </StyledIconButton>
                         </Tooltip>
                       </>
@@ -367,12 +367,12 @@ function DataManagement() {
                       <>
                         <Tooltip title="Edit">
                           <StyledIconButton onClick={() => handleEditStart(index)} color="primary">
-                            <EditIcon />
+                            <Edit />
                           </StyledIconButton>
                         </Tooltip>
                         <Tooltip title="Delete">
                           <StyledIconButton onClick={() => handleDelete(index)} color="secondary">
-                            <DeleteIcon />
+                            <Delete />
                           </StyledIconButton>
                         </Tooltip>
                       </>
