@@ -84,11 +84,13 @@ html, body, #root, .App {
   justify-content: space-between;
   align-items: center;
   padding: 0 16px;
+  background-color: #cc5500; /* Company color */
 }
 
 .header .project-title {
   flex-grow: 1;
   text-align: left;
+  color: white; /* Company color */
 }
 
 .header .project-icons {
@@ -99,4 +101,16 @@ html, body, #root, .App {
 .header .project-icons button,
 .header .project-icons .MuiIconButton-root {
   margin-left: 8px;
+  color: white; /* Company color */
+}
+
+/* Subtle animations */
+.header button,
+.header .MuiIconButton-root {
+  transition: transform 0.2s ease-in-out;
+}
+
+.header button:hover,
+.header .MuiIconButton-root:hover {
+  transform: scale(1.1);
 }

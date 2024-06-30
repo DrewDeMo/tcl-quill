@@ -42,15 +42,7 @@ function App() {
         <CssBaseline />
         <Router>
           <div className="flex flex-col min-h-screen">
-            <Header />
-            <IconButton
-              className="theme-toggle-icon"
-              sx={{ ml: 2, position: 'absolute', top: '10px', right: '10px' }} // Adjusted margin
-              onClick={toggleDarkMode}
-              color="inherit"
-            >
-              {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-            </IconButton>
+            <Header darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
             <main className="flex-grow">
               <Routes>
                 <Route path="/" element={user ? <Dashboard /> : <Navigate to="/signin" />} />

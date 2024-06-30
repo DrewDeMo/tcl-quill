@@ -8,8 +8,10 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import AccountCircle from '@mui/icons-material/AccountCircle';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 
-function Header() {
+function Header({ darkMode, toggleDarkMode }) {
   const [user] = useAuthState(auth);
 
   return (
@@ -49,6 +51,13 @@ function Header() {
               </Button>
             </>
           )}
+          <IconButton
+            className="theme-toggle-icon"
+            onClick={toggleDarkMode}
+            color="inherit"
+          >
+            {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
+          </IconButton>
         </div>
       </Toolbar>
     </AppBar>
