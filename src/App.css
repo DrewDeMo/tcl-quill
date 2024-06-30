@@ -75,92 +75,21 @@ html, body, #root, .App {
   flex-grow: 1;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 32px;
-  background-color: var(--primary-color);
-  transition: padding 0.3s ease, background-color 0.3s ease;
-  position: sticky;
-  top: 0;
-  width:100%;
-  z-index: 1000;
-  box-shadow: none; /* Remove any box-shadow */
-  border-radius: 0px;
-}
-
-.header.scrolled {
-  padding: 8px 16px;
-background: rgba(255, 255, 255, 0.2);
-border-radius: 16px;
-box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-backdrop-filter: blur(5px);
--webkit-backdrop-filter: blur(5px);
-border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.header .project-links {
-  display: flex;
-  align-items: center;
-}
-
-.header .project-links a {
-  margin: 0 16px;
-  text-decoration: none;
-  color: var(--secondary-color);
-  font-weight: 500;
-}
-
-.header .project-links a:hover {
-  text-decoration: underline;
-}
-
-.header .project-title {
-  flex-grow: 1;
-  text-align: left;
-  color: var(--secondary-color);
-  font-weight: 700;
-}
-
-.header .project-icons {
-  display: flex;
-  align-items: center;
-}
-
-.header .project-icons .MuiIconButton-root {
-  margin-left: 8px;
-  color: var(--secondary-color);
-}
-
-.header .project-icons .MuiAvatar-root {
-  width: 32px;
-  height: 32px;
-}
-
-.header button, .header .MuiIconButton-root {
-  transition: transform 0.2s ease-in-out;
-}
-
-.header button:hover, .header .MuiIconButton-root:hover {
-  transform: scale(1.1);
-}
+/* Remove conflicting header styles */
 
 body[data-theme='dark'] {
   background-color: var(--background-dark);
   color: var(--text-light);
 }
 
-
 /* Additional Global Styles */
 .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 {
   font-weight: 600;
 }
 
-
 /* Override Material-UI specific classes */
-.css-12niy62{
-  color:black;
+.css-12niy62 {
+  color: black;
 }
 
 body[data-theme=light] .MuiPaper-root  {
@@ -168,11 +97,11 @@ body[data-theme=light] .MuiPaper-root  {
 }
 
 @media (min-width: 1024px) {
-  .css-s43fis{
+  .css-s43fis {
     width: 100%;
   }
 }
 
-.MuiBox-root{
+.MuiBox-root {
   color: #383838;
 }
