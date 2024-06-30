@@ -16,6 +16,7 @@ import SignIn from './components/SignIn.jsx';
 import UserProfile from './components/UserProfile.jsx';
 import { lightTheme, darkTheme } from './theme.js';
 import './App.css'; // Add this line to include custom CSS
+import './styles/animations.css';
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);

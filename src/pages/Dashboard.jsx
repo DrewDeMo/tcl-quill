@@ -91,8 +91,8 @@ function Dashboard() {
   }
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h4" gutterBottom fontWeight={300}>
+    <Box sx={{ p: 4 }} className="fade-in">
+      <Typography variant="h4" gutterBottom fontWeight={300} color="text.primary">
         Financial Dashboard
       </Typography>
       {error && (
