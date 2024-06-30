@@ -1,4 +1,9 @@
-import { createTheme } from '@mui/material/styles';
+import React, { useEffect, useState } from 'react';
+import { AppBar, Toolbar, Typography, IconButton, Box, Button } from '@mui/material';
+import { Sun, Moon, User, Home, TrendingUp, Database } from 'react-feather';
+import { Link } from 'react-router-dom';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth } from '../firebase';
 
 const commonSettings = {
   typography: {
