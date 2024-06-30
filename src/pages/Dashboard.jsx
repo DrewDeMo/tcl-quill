@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Paper, Grid, CircularProgress, Box, TextField } from '@mui/material';
+import { Typography, Paper, Grid, CircularProgress, Box, TextField, useTheme } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -8,10 +8,12 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import dayjs from 'dayjs';
+import { ArrowUp, ArrowDown, DollarSign } from 'react-feather';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 function Dashboard() {
+  const theme = useTheme();
   const [user] = useAuthState(auth);
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -92,7 +94,7 @@ function Dashboard() {
 
   return (
     <Box sx={{ p: 4 }} className="fade-in">
-      <Typography variant="h4" gutterBottom fontWeight={300} color="text.primary">
+      <Typography variant="h4" gutterBottom fontWeight={700} color="text.primary">
         Financial Dashboard
       </Typography>
       {error && (
@@ -100,7 +102,7 @@ function Dashboard() {
           {error}
         </Typography>
       )}
-      <Paper sx={{ p: 3, mb: 4 }}>
+      <Paper sx={{ p: 3, mb: 4, background: theme.palette.background.paper }}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={6} md={3}>
@@ -123,8 +125,59 @@ function Dashboard() {
         </LocalizationProvider>
       </Paper>
       <Grid container spacing={4}>
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
+            <Typography variant="h6" gutterBottom fontWeight={600}>
+              Total Income
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <DollarSign size={24} color={theme.palette.success.main} />
+              <Typography variant="h4" sx={{ ml: 1, fontWeight: 700 }}>
+                {totals.totalIncome.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary">
+              <ArrowUp size={16} color={theme.palette.success.main} style={{ marginRight: 4 }} />
+              5% increase from last month
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
+            <Typography variant="h6" gutterBottom fontWeight={600}>
+              Total Expense
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <DollarSign size={24} color={theme.palette.error.main} />
+              <Typography variant="h4" sx={{ ml: 1, fontWeight: 700 }}>
+                {totals.totalExpense.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary">
+              <ArrowDown size={16} color={theme.palette.error.main} style={{ marginRight: 4 }} />
+              2% decrease from last month
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
+            <Typography variant="h6" gutterBottom fontWeight={600}>
+              Net Profit
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <DollarSign size={24} color={theme.palette.info.main} />
+              <Typography variant="h4" sx={{ ml: 1, fontWeight: 700 }}>
+                {totals.totalProfit.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary">
+              <ArrowUp size={16} color={theme.palette.info.main} style={{ marginRight: 4 }} />
+              8% increase from last month
+            </Typography>
+          </Paper>
+        </Grid>
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: '100%' }}>
+          <Paper sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
             <Typography variant="h6" gutterBottom fontWeight={600}>
               Financial Overview
             </Typography>
@@ -151,7 +204,7 @@ function Dashboard() {
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: '100%' }}>
+          <Paper sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
             <Typography variant="h6" gutterBottom fontWeight={600}>
               Income vs Expense Trend
             </Typography>
@@ -162,14 +215,14 @@ function Dashboard() {
                 <YAxis />
                 <Tooltip formatter={(value) => value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} />
                 <Legend />
-                <Line type="monotone" dataKey="Total Income" stroke="#8884d8" />
-                <Line type="monotone" dataKey="Total Expense" stroke="#82ca9d" />
+                <Line type="monotone" dataKey="Total Income" stroke={theme.palette.primary.main} />
+                <Line type="monotone" dataKey="Total Expense" stroke={theme.palette.error.main} />
               </LineChart>
             </ResponsiveContainer>
           </Paper>
         </Grid>
         <Grid item xs={12}>
-          <Paper sx={{ p: 3 }}>
+          <Paper sx={{ p: 3, background: theme.palette.background.paper }}>
             <Typography variant="h6" gutterBottom fontWeight={600}>
               Monthly Net Income
             </Typography>
@@ -180,7 +233,7 @@ function Dashboard() {
                 <YAxis />
                 <Tooltip formatter={(value) => value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} />
                 <Legend />
-                <Bar dataKey="Net Income" fill="#8884d8" />
+                <Bar dataKey="Net Income" fill={theme.palette.primary.main} />
               </BarChart>
             </ResponsiveContainer>
           </Paper>
