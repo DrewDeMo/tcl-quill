@@ -10,6 +10,9 @@ import IconButton from '@mui/material/IconButton';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import StorageIcon from '@mui/icons-material/Storage';
 
 function Header({ darkMode, toggleDarkMode }) {
   const [user] = useAuthState(auth);
@@ -23,13 +26,13 @@ function Header({ darkMode, toggleDarkMode }) {
         <div className="project-icons">
           {user ? (
             <>
-              <Button color="inherit" component={Link} to="/">
+              <Button color="inherit" component={Link} to="/" startIcon={<DashboardIcon />}>
                 Dashboard
               </Button>
-              <Button color="inherit" component={Link} to="/projections">
+              <Button color="inherit" component={Link} to="/projections" startIcon={<TrendingUpIcon />}>
                 Financial Projections
               </Button>
-              <Button color="inherit" component={Link} to="/data">
+              <Button color="inherit" component={Link} to="/data" startIcon={<StorageIcon />}>
                 Data Management
               </Button>
               <IconButton

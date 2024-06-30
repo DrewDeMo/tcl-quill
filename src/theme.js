@@ -3,6 +3,10 @@ import { createTheme } from '@mui/material/styles';
 const commonSettings = {
   typography: {
     fontFamily: 'Roboto, Arial, sans-serif',
+    fontWeightLight: 300,
+    fontWeightRegular: 400,
+    fontWeightMedium: 500,
+    fontWeightBold: 700,
   },
   components: {
     MuiButton: {
@@ -10,6 +14,23 @@ const commonSettings = {
         root: {
           borderRadius: 8,
           textTransform: 'none',
+          fontWeight: 500,
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          padding: '16px',
+          border: '1px solid rgba(0, 0, 0, 0.12)',
+        },
+      },
+    },
+    MuiTypography: {
+      styleOverrides: {
+        h6: {
+          fontWeight: 700,
         },
       },
     },

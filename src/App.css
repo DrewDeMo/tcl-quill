@@ -124,6 +124,7 @@ body[data-theme='dark'] {
 body[data-theme='dark'] .MuiPaper-root {
   background-color: #1e1e1e; /* Dark paper */
   color: #ffffff; /* White text */
+  border: 1px solid rgba(255, 255, 255, 0.12); /* Subtle border */
 }
 
 body[data-theme='dark'] .MuiButton-root {
