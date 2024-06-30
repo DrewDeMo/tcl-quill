@@ -4,6 +4,11 @@ import { splitVendorChunkPlugin } from 'vite'
 
 export default defineConfig({
   plugins: [react(), splitVendorChunkPlugin()],
+  resolve: {
+    alias: {
+      'react-feather': 'node_modules/react-feather'
+    }
+  },
   build: {
     rollupOptions: {
       output: {
