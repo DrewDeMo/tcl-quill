@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, IconButton, Switch, Box, Button, Avatar } from '@mui/material';
+import { AppBar, Toolbar, Typography, IconButton, Box, Button, Avatar } from '@mui/material';
 import { Brightness4 as DarkModeIcon, Brightness7 as LightModeIcon } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -23,7 +23,6 @@ const Header = ({ darkMode, toggleDarkMode }) => {
           <IconButton color="inherit" onClick={toggleDarkMode}>
             {darkMode ? <DarkModeIcon /> : <LightModeIcon />}
           </IconButton>
-          <Switch checked={darkMode} onChange={toggleDarkMode} />
           {user && (
             <IconButton color="inherit" component={Link} to="/profile">
               <Avatar alt={user.displayName || 'User'} src={user.photoURL || '/default-avatar.png'} />

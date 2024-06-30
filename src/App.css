@@ -42,7 +42,6 @@ body {
   padding: 2em;
   background: var(--background-light);
   border-radius: var(--border-radius);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .read-the-docs {
@@ -96,7 +95,6 @@ html, body, #root, .App {
   background-color: var(--primary-color);
   transition: padding 0.3s ease;
   border: none;
-  box-shadow: none;
 }
 
 .header .project-links {
