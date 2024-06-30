@@ -9,15 +9,15 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from './firebase.js';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import Header from './components/Header';
-import Footer from './components/Footer';
-import Dashboard from './pages/Dashboard';
-import FinancialProjections from './pages/FinancialProjections';
-import DataManagement from './pages/DataManagement';
-import SignUp from './components/SignUp';
-import SignIn from './components/SignIn';
-import UserProfile from './components/UserProfile';
-import theme from './theme';
+import Header from './components/Header.jsx';
+import Footer from './components/Footer.jsx';
+import Dashboard from './pages/Dashboard.jsx';
+import FinancialProjections from './pages/FinancialProjections.jsx';
+import DataManagement from './pages/DataManagement.jsx';
+import SignUp from './components/SignUp.jsx';
+import SignIn from './components/SignIn.jsx';
+import UserProfile from './components/UserProfile.jsx';
+import theme from './theme.js';
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
