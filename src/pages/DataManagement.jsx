@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, Grid, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Tooltip, Box } from '@mui/material';
-import { Delete, Edit, Save, Cancel, Plus, RefreshCcw, Trash2, ChevronUp, ChevronDown } from 'react-feather';
+import { Delete, Edit, Save, X, Plus, RefreshCcw, Trash2, ChevronUp, ChevronDown } from 'react-feather';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
