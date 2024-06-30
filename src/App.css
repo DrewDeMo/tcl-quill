@@ -132,13 +132,11 @@ html, body, #root, .App {
   height: 32px;
 }
 
-.header button,
-.header .MuiIconButton-root {
+.header button, .header .MuiIconButton-root {
   transition: transform 0.2s ease-in-out;
 }
 
-.header button:hover,
-.header .MuiIconButton-root:hover {
+.header button:hover, .header .MuiIconButton-root:hover {
   transform: scale(1.1);
 }
 
