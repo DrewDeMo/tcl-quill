@@ -187,7 +187,6 @@ body[data-theme='light'] .MuiTypography-root {
 
 .MuiPaper-root {
   padding: 16px;
-  margin: 16px 0;
   border-radius: var(--border-radius);
   box-shadow: none; /* Remove any box-shadow */
 }
