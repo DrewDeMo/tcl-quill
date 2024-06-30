@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../firebase';
@@ -16,10 +16,26 @@ import StorageIcon from '@mui/icons-material/Storage';
 
 function Header({ darkMode, toggleDarkMode }) {
   const [user] = useAuthState(auth);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   return (
     <AppBar position="static">
-      <Toolbar className="header">
+      <Toolbar className={`header ${scrolled ? 'scrolled' : ''}`}>
         <Typography variant="h6" component="div" className="project-title">
           TCL Marketing
         </Typography>

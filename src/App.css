@@ -52,6 +52,12 @@
   .project-icons {
     display: flex;
   }
+  .project-icons button {
+    display: none;
+  }
+  .project-icons .MuiIconButton-root {
+    margin-left: 16px;
+  }
 }
 
 /* Additional styles for the dark and light theme icon */
@@ -85,8 +91,13 @@ html, body, #root, .App {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 16px;
+  padding: 16px 32px;
   background-color: #cc5500; /* Company color */
+  transition: padding 0.3s ease;
+}
+
+.header.scrolled {
+  padding: 8px 16px;
 }
 
 .header .project-title {

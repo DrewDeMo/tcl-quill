@@ -2,7 +2,7 @@ import { createTheme } from '@mui/material/styles';
 
 const commonSettings = {
   typography: {
-    fontFamily: 'Source Sans Pro, Arial, sans-serif',
+    fontFamily: 'Open Sans, Arial, sans-serif',
     fontWeightThin: 100,
     fontWeightExtraLight: 200,
     fontWeightLight: 300,
@@ -19,7 +19,7 @@ const commonSettings = {
         root: {
           borderRadius: 8,
           textTransform: 'none',
-          fontWeight: 500,
+          fontWeight: 600,
         },
       },
     },
@@ -52,13 +52,25 @@ const commonSettings = {
         h6: {
           fontWeight: 400,
         },
-        body1: {
+        subtitle1: {
           fontWeight: 300,
         },
-        body2: {
+        subtitle2: {
           fontWeight: 200,
         },
+        body1: {
+          fontWeight: 400,
+        },
+        body2: {
+          fontWeight: 300,
+        },
+        button: {
+          fontWeight: 600,
+        },
         caption: {
+          fontWeight: 200,
+        },
+        overline: {
           fontWeight: 100,
         },
       },
