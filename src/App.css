@@ -153,6 +153,10 @@ body[data-theme='dark'] {
 
 
 /* Override Material-UI specific classes */
+.css-12niy62{
+  color:black;
+}
+
 body[data-theme=light] .MuiPaper-root  {
   box-shadow: none !important;
 }
