@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
 import { TextField, Button, Typography, Paper, Box } from '@mui/material';
+import { UserPlus } from 'react-feather';
 import { useNavigate } from 'react-router-dom';
 
-function SignUp() {
+const SignUp = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -28,7 +29,7 @@ function SignUp() {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Paper className="p-4 max-w-md mx-auto" sx={{ p: 3, borderRadius: 'var(--border-radius)' }}>
+      <Paper sx={{ p: 3, borderRadius: 'var(--border-radius)' }}>
         <Typography variant="h5" gutterBottom fontWeight={500}>
           Sign Up
         </Typography>
@@ -61,13 +62,13 @@ function SignUp() {
             margin="normal"
             required
           />
-          <Button type="submit" variant="contained" color="primary" fullWidth>
+          <Button type="submit" variant="contained" color="primary" fullWidth startIcon={<UserPlus />}>
             Sign Up
           </Button>
         </form>
       </Paper>
     </Box>
   );
-}
+};
 
 export default SignUp;

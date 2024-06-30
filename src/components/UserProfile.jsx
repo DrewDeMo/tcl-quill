@@ -4,8 +4,9 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { updateProfile } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { Save } from 'react-feather';
 
-function UserProfile() {
+const UserProfile = () => {
   const [user, loading] = useAuthState(auth);
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -118,6 +119,7 @@ function UserProfile() {
                 variant="contained"
                 color="primary"
                 disabled={updating}
+                startIcon={<Save />}
               >
                 {updating ? <CircularProgress size={24} /> : 'Update Profile'}
               </Button>
@@ -133,6 +135,6 @@ function UserProfile() {
       />
     </Box>
   );
-}
+};
 
 export default UserProfile;
