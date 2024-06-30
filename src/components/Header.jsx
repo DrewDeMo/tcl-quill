@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppBar, Toolbar, Typography, IconButton, Box, Button, Avatar } from '@mui/material';
 import { Brightness4 as DarkModeIcon, Brightness7 as LightModeIcon } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
@@ -7,9 +7,22 @@ import { auth } from '../firebase';
 
 const Header = ({ darkMode, toggleDarkMode }) => {
   const [user] = useAuthState(auth);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   return (
-    <AppBar position="static" className="header">
+    <AppBar position="sticky" className={`header ${scrolled ? 'scrolled' : ''}`}>
       <Toolbar>
         <Typography variant="h6" className="project-title">
           Financial Projection App
