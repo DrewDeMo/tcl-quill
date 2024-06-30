@@ -18,7 +18,7 @@ function Header() {
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }} className="project-title">
           TCL Marketing
         </Typography>
-        <div className="project-icons">
+        <div className="project-icons hidden">
           {user ? (
             <>
               <Button color="inherit" component={Link} to="/">
