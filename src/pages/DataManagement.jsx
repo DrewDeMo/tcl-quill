@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, TextField, Grid, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton, Tooltip, Box, useTheme } from '@mui/material';
-import { Trash2, Edit, Save, X as Cancel, Plus, RefreshCcw, ChevronUp, ChevronDown, DollarSign, Calendar } from 'react-feather';
+import { Trash2, Edit, Save, X as Cancel, Plus, RefreshCw, ChevronUp, ChevronDown, DollarSign, Calendar } from 'react-feather';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
 import { styled } from '@mui/system';
+import dayjs from 'dayjs';
+
+// Refined color palette for financial data
+const FINANCIAL_COLORS = {
+  income: '#66BB6A',  // Softer green
+  expense: '#EF5350',  // Softer red
+  profit: '#42A5F5',  // Softer blue
+  neutral: '#BDBDBD'  // Neutral gray
+};
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   transition: 'background-color 0.3s ease',
@@ -231,17 +240,38 @@ const DataManagement = () => {
     let sortableItems = [...data];
     if (sortConfig.key !== null) {
       sortableItems.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
-          return sortConfig.direction === 'ascending' ? -1 : 1;
+        if (sortConfig.key === 'Month') {
+          return sortConfig.direction === 'ascending'
+            ? dayjs(a[sortConfig.key], 'MMMM YYYY').diff(dayjs(b[sortConfig.key], 'MMMM YYYY'))
+            : dayjs(b[sortConfig.key], 'MMMM YYYY').diff(dayjs(a[sortConfig.key], 'MMMM YYYY'));
+        } else {
+          const aValue = parseFloat(a[sortConfig.key]);
+          const bValue = parseFloat(b[sortConfig.key]);
+          return sortConfig.direction === 'ascending' ? aValue - bValue : bValue - aValue;
         }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
-          return sortConfig.direction === 'ascending' ? 1 : -1;
-        }
-        return 0;
       });
     }
     return sortableItems;
   }, [data, sortConfig]);
+
+  const cardStyle = {
+    p: 3,
+    mb: 4,
+    background: theme.palette.background.paper,
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: 2,
+    boxShadow: theme.shadows[3],
+    transition: 'box-shadow 0.3s ease-in-out',
+    '&:hover': {
+      boxShadow: theme.shadows[6],
+    },
+  };
+
+  const cardTitleStyle = {
+    fontWeight: 600,
+    mb: 2,
+    color: theme.palette.text.primary,
+  };
 
   if (loading) {
     return (
@@ -253,7 +283,7 @@ const DataManagement = () => {
 
   return (
     <Box sx={{ p: 4 }} className="fade-in">
-      <Typography variant="h4" gutterBottom fontWeight={700} color="text.primary">
+      <Typography variant="h4" gutterBottom fontWeight={700} color="text.primary" sx={{ mb: 4 }}>
         Financial Data Management
       </Typography>
       {error && (
@@ -261,37 +291,42 @@ const DataManagement = () => {
           {error}
         </Typography>
       )}
-      <Paper sx={{ p: 3, mb: 4, background: theme.palette.background.paper }}>
+      <Paper sx={cardStyle}>
+        <Typography variant="h6" sx={cardTitleStyle}>
+          Data Operations
+        </Typography>
         <Grid container spacing={2} alignItems="center">
-          <Grid item>
+          <Grid item xs={12} sm={6} md={4}>
             <Button
               variant="contained"
               color="primary"
-              startIcon={<RefreshCcw />}
+              startIcon={<RefreshCw />}
               onClick={handleGenerateFakeData}
+              fullWidth
             >
               Generate 5 Years of Fake Data
             </Button>
           </Grid>
-          <Grid item>
+          <Grid item xs={12} sm={6} md={4}>
             <Button
               variant="outlined"
               color="error"
               startIcon={<Trash2 />}
               onClick={() => setOpenClearDialog(true)}
+              fullWidth
             >
               Clear All Data
             </Button>
           </Grid>
         </Grid>
       </Paper>
-      <Paper sx={{ p: 3, mb: 4, background: theme.palette.background.paper }}>
-        <Typography variant="h6" gutterBottom fontWeight={600}>
+      <Paper sx={cardStyle}>
+        <Typography variant="h6" sx={cardTitleStyle}>
           Add New Entry
         </Typography>
         <Grid container spacing={2} alignItems="center">
           {Object.keys(newEntry).map((key) => (
-            <Grid item xs={12} sm={2} key={key}>
+            <Grid item xs={12} sm={6} md={2} key={key}>
               <TextField
                 fullWidth
                 label={key}
@@ -312,13 +347,17 @@ const DataManagement = () => {
               color="primary"
               startIcon={<Plus />}
               onClick={handleAddEntry}
+              fullWidth
             >
               Add Entry
             </Button>
           </Grid>
         </Grid>
       </Paper>
-      <Paper sx={{ p: 3, background: theme.palette.background.paper }}>
+      <Paper sx={cardStyle}>
+        <Typography variant="h6" sx={cardTitleStyle}>
+          Financial Data
+        </Typography>
         <TableContainer>
           <Table>
             <TableHead>
@@ -361,61 +400,4 @@ const DataManagement = () => {
                   <StyledTableCell>
                     {editingIndex === index ? (
                       <>
-                        <Tooltip title="Save">
-                          <StyledIconButton onClick={() => handleEditSave(index)} color="primary">
-                            <Save />
-                          </StyledIconButton>
-                        </Tooltip>
-                        <Tooltip title="Cancel">
-                          <StyledIconButton onClick={handleEditCancel} color="secondary">
-                            <Cancel />
-                          </StyledIconButton>
-                        </Tooltip>
-                      </>
-                    ) : (
-                      <>
-                        <Tooltip title="Edit">
-                          <StyledIconButton onClick={() => handleEditStart(index)} color="primary">
-                            <Edit />
-                          </StyledIconButton>
-                        </Tooltip>
-                        <Tooltip title="Delete">
-                          <StyledIconButton onClick={() => handleDelete(index)} color="secondary">
-                            <Trash2 />
-                          </StyledIconButton>
-                        </Tooltip>
-                      </>
-                    )}
-                  </StyledTableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-      <Dialog
-        open={openClearDialog}
-        onClose={() => setOpenClearDialog(false)}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">{"Clear all data?"}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            Are you sure you want to clear all financial data? This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenClearDialog(false)} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleClearData} color="error" autoFocus>
-            Clear All Data
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
-  );
-}
-
-export default DataManagement;
+                        <Tooltip title="
