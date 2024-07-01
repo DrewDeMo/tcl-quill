@@ -1,38 +1,53 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
-import { TextField, Button, Typography, Paper, Box, Grid, CssBaseline } from '@mui/material';
+import { TextField, Button, Typography, Paper, Box, Grid, CssBaseline, useMediaQuery } from '@mui/material';
 import { LogIn, Mail, Lock } from 'react-feather';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-
-const theme = createTheme({
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-    h4: {
-      fontWeight: 700,
-    },
-    body1: {
-      fontWeight: 400,
-    },
-  },
-  palette: {
-    primary: {
-      main: '#FF9800', // Orange color
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-          fontWeight: 500,
-        },
-      },
-    },
-  },
-});
+import { createTheme, ThemeProvider, useTheme } from '@mui/material/styles';
 
 const SignIn = () => {
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+
+  const theme = React.useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: prefersDarkMode ? 'dark' : 'light',
+          primary: {
+            main: '#FF9800', // Orange color
+          },
+          background: {
+            default: prefersDarkMode ? '#303030' : '#f5f5f5',
+            paper: prefersDarkMode ? '#424242' : '#ffffff',
+          },
+          text: {
+            primary: prefersDarkMode ? '#ffffff' : '#000000',
+          },
+        },
+        typography: {
+          fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+          h4: {
+            fontWeight: 700,
+            color: '#ffffff',
+          },
+          body1: {
+            fontWeight: 400,
+          },
+        },
+        components: {
+          MuiButton: {
+            styleOverrides: {
+              root: {
+                textTransform: 'none',
+                fontWeight: 500,
+              },
+            },
+          },
+        },
+      }),
+    [prefersDarkMode],
+  );
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -49,7 +64,7 @@ const SignIn = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <Grid container component="main" sx={{ minHeight: 'calc(100vh - 128px)' }}> {/* Adjust 128px based on your header + footer height */}
+      <Grid container component="main" sx={{ height: '100%' }}>
         <CssBaseline />
         <Grid
           item
@@ -59,8 +74,7 @@ const SignIn = () => {
           sx={{
             backgroundImage: 'url(https://source.unsplash.com/random?finance)',
             backgroundRepeat: 'no-repeat',
-            backgroundColor: (t) =>
-              t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
+            backgroundColor: (t) => t.palette.background.default,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
@@ -77,6 +91,7 @@ const SignIn = () => {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
+            bgcolor: 'background.paper',
           }}
         >
           <Box
@@ -88,7 +103,7 @@ const SignIn = () => {
               alignItems: 'center',
             }}
           >
-            <Typography component="h1" variant="h4" gutterBottom>
+            <Typography component="h1" variant="h4" gutterBottom sx={{ color: 'primary.main' }}>
               Sign In
             </Typography>
             {error && (
