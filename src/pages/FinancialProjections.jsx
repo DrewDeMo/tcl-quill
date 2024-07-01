@@ -13,6 +13,7 @@ function FinancialProjections() {
   const [user] = useAuthState(auth);
   const [data, setData] = useState([]);
   const [projections, setProjections] = useState([]);
+  const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [growthRate, setGrowthRate] = useState(5);
@@ -48,6 +49,11 @@ function FinancialProjections() {
     }
   }, [data, growthRate, projectionMonths]);
 
+  useEffect(() => {
+    const combinedData = [...data, ...projections];
+    setChartData(combinedData);
+  }, [data, projections]);
+
   const generateProjections = () => {
     const lastMonth = data[data.length - 1];
     const projectedData = [];
@@ -74,7 +80,7 @@ function FinancialProjections() {
   };
 
   const handleExportToCSV = () => {
-    exportToCSV(combinedData, 'financial_projections');
+    exportToCSV(chartData, 'financial_projections');
   };
 
   const calculateBreakEven = () => {
@@ -93,8 +99,6 @@ function FinancialProjections() {
       revenue: breakEvenRevenue.toFixed(2),
     };
   };
-
-  const combinedData = [...data, ...projections];
 
   if (loading) {
     return (
@@ -161,7 +165,7 @@ function FinancialProjections() {
               Income and Expense Projections
             </Typography>
             <ResponsiveContainer width="100%" height={400}>
-              <LineChart data={combinedData}>
+              <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="Month" />
                 <YAxis />
@@ -190,7 +194,7 @@ function FinancialProjections() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {projections.map((row, index) => (
+                  {chartData.map((row, index) => (
                     <TableRow key={index}>
                       <TableCell component="th" scope="row">
                         {row.Month}
