@@ -6,9 +6,23 @@ import { LogIn, Mail, Lock } from 'react-feather';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2', // You can adjust this color to match your brand
+  typography: {
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    h4: {
+      fontWeight: 700,
+    },
+    body1: {
+      fontWeight: 400,
+    },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          fontWeight: 500,
+        },
+      },
     },
   },
 });
@@ -38,7 +52,7 @@ const SignIn = () => {
           sm={4}
           md={7}
           sx={{
-            backgroundImage: 'url(https://images.unsplash.com/photo-1551260827-090fb1329972?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80)',
+            backgroundImage: 'url(https://source.unsplash.com/random?finance)',
             backgroundRepeat: 'no-repeat',
             backgroundColor: (t) =>
               t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
@@ -46,7 +60,20 @@ const SignIn = () => {
             backgroundPosition: 'center',
           }}
         />
-        <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square>
+        <Grid
+          item
+          xs={12}
+          sm={8}
+          md={5}
+          component={Paper}
+          elevation={6}
+          square
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+          }}
+        >
           <Box
             sx={{
               my: 8,
@@ -54,11 +81,9 @@ const SignIn = () => {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
             }}
           >
-            <Typography component="h1" variant="h4" sx={{ mb: 4, fontWeight: 'bold' }}>
+            <Typography component="h1" variant="h4" gutterBottom>
               Sign In
             </Typography>
             {error && (
@@ -66,7 +91,7 @@ const SignIn = () => {
                 {error}
               </Typography>
             )}
-            <Box component="form" noValidate onSubmit={handleSignIn} sx={{ mt: 1, width: '100%' }}>
+            <Box component="form" noValidate onSubmit={handleSignIn} sx={{ mt: 3, width: '100%' }}>
               <TextField
                 margin="normal"
                 required
