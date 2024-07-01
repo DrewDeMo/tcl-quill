@@ -15,6 +15,11 @@ const theme = createTheme({
       fontWeight: 400,
     },
   },
+  palette: {
+    primary: {
+      main: '#FF9800', // Orange color
+    },
+  },
   components: {
     MuiButton: {
       styleOverrides: {
@@ -44,7 +49,7 @@ const SignIn = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <Grid container component="main" sx={{ height: '100vh' }}>
+      <Grid container component="main" sx={{ minHeight: 'calc(100vh - 128px)' }}> {/* Adjust 128px based on your header + footer height */}
         <CssBaseline />
         <Grid
           item
@@ -76,7 +81,7 @@ const SignIn = () => {
         >
           <Box
             sx={{
-              my: 8,
+              my: 4,
               mx: 4,
               display: 'flex',
               flexDirection: 'column',
@@ -91,7 +96,7 @@ const SignIn = () => {
                 {error}
               </Typography>
             )}
-            <Box component="form" noValidate onSubmit={handleSignIn} sx={{ mt: 3, width: '100%' }}>
+            <Box component="form" noValidate onSubmit={handleSignIn} sx={{ mt: 1, width: '100%' }}>
               <TextField
                 margin="normal"
                 required
@@ -126,6 +131,7 @@ const SignIn = () => {
                 type="submit"
                 fullWidth
                 variant="contained"
+                color="primary"
                 sx={{ mt: 3, mb: 2, py: 1.5 }}
                 startIcon={<LogIn />}
               >
