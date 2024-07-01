@@ -102,7 +102,7 @@ function Dashboard() {
           {error}
         </Typography>
       )}
-      <Paper sx={{ p: 3, mb: 4, background: theme.palette.background.paper }}>
+      <Paper id="date-filter-card" className="dashboard-card" sx={{ p: 3, mb: 4, background: theme.palette.background.paper }}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} sm={6} md={3}>
@@ -126,7 +126,7 @@ function Dashboard() {
       </Paper>
       <Grid container spacing={4}>
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
+          <Paper id="total-income-card" className="dashboard-card" sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
             <Typography variant="h6" gutterBottom fontWeight={600}>
               Total Income
             </Typography>
@@ -143,7 +143,7 @@ function Dashboard() {
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
+          <Paper id="total-expense-card" className="dashboard-card" sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
             <Typography variant="h6" gutterBottom fontWeight={600}>
               Total Expense
             </Typography>
@@ -160,7 +160,7 @@ function Dashboard() {
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
+          <Paper id="net-profit-card" className="dashboard-card" sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
             <Typography variant="h6" gutterBottom fontWeight={600}>
               Net Profit
             </Typography>
@@ -177,7 +177,7 @@ function Dashboard() {
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
+          <Paper id="financial-overview-card" className="dashboard-card" sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
             <Typography variant="h6" gutterBottom fontWeight={600}>
               Financial Overview
             </Typography>
@@ -204,7 +204,7 @@ function Dashboard() {
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
+          <Paper id="income-expense-trend-card" className="dashboard-card" sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
             <Typography variant="h6" gutterBottom fontWeight={600}>
               Income vs Expense Trend
             </Typography>
@@ -222,7 +222,7 @@ function Dashboard() {
           </Paper>
         </Grid>
         <Grid item xs={12}>
-          <Paper sx={{ p: 3, background: theme.palette.background.paper }}>
+          <Paper id="monthly-net-income-card" className="dashboard-card" sx={{ p: 3, background: theme.palette.background.paper }}>
             <Typography variant="h6" gutterBottom fontWeight={600}>
               Monthly Net Income
             </Typography>
