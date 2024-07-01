@@ -6,7 +6,15 @@ import { auth, db } from '../firebase';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import { exportToCSV } from '../utils/exportData';
 import dayjs from 'dayjs';
-import { TrendingUp, Download, DollarSign, Percent } from 'react-feather';
+import { TrendingUp, Download, DollarSign, Percent, RefreshCw } from 'react-feather';
+
+// Refined color palette for financial charts
+const CHART_COLORS = {
+  income: '#66BB6A',  // Softer green
+  expense: '#EF5350',  // Softer red
+  profit: '#42A5F5',  // Softer blue
+  neutral: '#BDBDBD'  // Neutral gray
+};
 
 function FinancialProjections() {
   const theme = useTheme();
@@ -102,6 +110,25 @@ function FinancialProjections() {
     };
   };
 
+  const cardStyle = {
+    p: 3,
+    height: '100%',
+    background: theme.palette.background.paper,
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: 2,
+    boxShadow: theme.shadows[3],
+    transition: 'box-shadow 0.3s ease-in-out',
+    '&:hover': {
+      boxShadow: theme.shadows[6],
+    },
+  };
+
+  const cardTitleStyle = {
+    fontWeight: 600,
+    mb: 2,
+    color: theme.palette.text.primary,
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -112,7 +139,7 @@ function FinancialProjections() {
 
   return (
     <Box sx={{ p: 4 }} className="fade-in">
-      <Typography variant="h4" gutterBottom fontWeight={700} color="text.primary">
+      <Typography variant="h4" gutterBottom fontWeight={700} color="text.primary" sx={{ mb: 4 }}>
         Financial Projections
       </Typography>
       {error && (
@@ -120,8 +147,11 @@ function FinancialProjections() {
           {error}
         </Typography>
       )}
-      <Paper sx={{ p: 3, mb: 4, background: theme.palette.background.paper }}>
-        <Grid container spacing={2} alignItems="center">
+      <Paper sx={{ ...cardStyle, mb: 4 }}>
+        <Typography variant="h6" sx={cardTitleStyle}>
+          Projection Settings
+        </Typography>
+        <Grid container spacing={3} alignItems="center">
           <Grid item xs={12} sm={6} md={3}>
             <TextField
               fullWidth
@@ -149,12 +179,12 @@ function FinancialProjections() {
             />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Button variant="contained" color="primary" onClick={generateProjections} startIcon={<TrendingUp />}>
+            <Button variant="contained" color="primary" onClick={generateProjections} startIcon={<RefreshCw />} fullWidth>
               Generate Projections
             </Button>
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <Button variant="outlined" color="primary" onClick={handleExportToCSV} startIcon={<Download />}>
+            <Button variant="outlined" color="primary" onClick={handleExportToCSV} startIcon={<Download />} fullWidth>
               Export to CSV
             </Button>
           </Grid>
@@ -162,8 +192,8 @@ function FinancialProjections() {
       </Paper>
       <Grid container spacing={4}>
         <Grid item xs={12}>
-          <Paper sx={{ p: 3, background: theme.palette.background.paper }}>
-            <Typography variant="h6" gutterBottom fontWeight={600}>
+          <Paper sx={cardStyle}>
+            <Typography variant="h6" sx={cardTitleStyle}>
               Income and Expense Projections
             </Typography>
             <ResponsiveContainer width="100%" height={400}>
@@ -173,16 +203,16 @@ function FinancialProjections() {
                 <YAxis />
                 <Tooltip formatter={(value) => value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} />
                 <Legend />
-                <Line type="monotone" dataKey="Total Income" stroke={theme.palette.primary.main} />
-                <Line type="monotone" dataKey="Total Expense" stroke={theme.palette.error.main} />
-                <Line type="monotone" dataKey="Net Income" stroke={theme.palette.success.main} />
+                <Line type="monotone" dataKey="Total Income" stroke={CHART_COLORS.income} />
+                <Line type="monotone" dataKey="Total Expense" stroke={CHART_COLORS.expense} />
+                <Line type="monotone" dataKey="Net Income" stroke={CHART_COLORS.profit} />
               </LineChart>
             </ResponsiveContainer>
           </Paper>
         </Grid>
         <Grid item xs={12}>
-          <Paper sx={{ p: 3, background: theme.palette.background.paper }}>
-            <Typography variant="h6" gutterBottom fontWeight={600}>
+          <Paper sx={cardStyle}>
+            <Typography variant="h6" sx={cardTitleStyle}>
               Projection Data
             </Typography>
             <TableContainer>
@@ -212,21 +242,21 @@ function FinancialProjections() {
           </Paper>
         </Grid>
         <Grid item xs={12}>
-          <Paper sx={{ p: 3, background: theme.palette.background.paper }}>
-            <Typography variant="h6" gutterBottom fontWeight={600}>
+          <Paper sx={cardStyle}>
+            <Typography variant="h6" sx={cardTitleStyle}>
               Break-Even Analysis
             </Typography>
             {calculateBreakEven() ? (
-              <Grid container spacing={2}>
+              <Grid container spacing={3}>
                 <Grid item xs={12} sm={6}>
-                  <Paper elevation={0} sx={{ p: 2, background: theme.palette.background.default }}>
-                    <Typography variant="subtitle1">Break-Even Units</Typography>
+                  <Paper elevation={0} sx={{ p: 3, background: theme.palette.background.default }}>
+                    <Typography variant="subtitle1" gutterBottom>Break-Even Units</Typography>
                     <Typography variant="h5" fontWeight={600}>{calculateBreakEven().units}</Typography>
                   </Paper>
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <Paper elevation={0} sx={{ p: 2, background: theme.palette.background.default }}>
-                    <Typography variant="subtitle1">Break-Even Revenue</Typography>
+                  <Paper elevation={0} sx={{ p: 3, background: theme.palette.background.default }}>
+                    <Typography variant="subtitle1" gutterBottom>Break-Even Revenue</Typography>
                     <Typography variant="h5" fontWeight={600}>
                       {parseFloat(calculateBreakEven().revenue).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                     </Typography>
