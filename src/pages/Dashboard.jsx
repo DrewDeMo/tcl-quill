@@ -3,19 +3,19 @@ import { Typography, Paper, Grid, CircularProgress, Box, TextField, useTheme, Bu
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, ReferenceLine } from 'recharts';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import dayjs from 'dayjs';
 import { TrendingUp, TrendingDown, DollarSign, Calendar, RefreshCw } from 'react-feather';
 
-// Professional color palette for financial charts
+// Refined color palette for financial charts
 const CHART_COLORS = {
-  income: '#4CAF50',
-  expense: '#F44336',
-  profit: '#2196F3',
-  neutral: '#9E9E9E'
+  income: '#66BB6A',  // Softer green
+  expense: '#EF5350',  // Softer red
+  profit: '#42A5F5',  // Softer blue
+  neutral: '#BDBDBD'  // Neutral gray
 };
 
 function Dashboard() {
@@ -117,6 +117,14 @@ function Dashboard() {
     setStartDate(null);
     setEndDate(null);
     setFilteredData(data);
+  };
+
+  const calculateChartDomain = (dataKey) => {
+    const values = filteredData.map(item => parseFloat(item[dataKey]));
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
+    const absMax = Math.max(Math.abs(minValue), Math.abs(maxValue));
+    return [-absMax, absMax];
   };
 
   if (loading) {
@@ -290,10 +298,15 @@ function Dashboard() {
               <BarChart data={filteredData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="Month" />
-                <YAxis />
+                <YAxis domain={calculateChartDomain('Net Income')} />
                 <Tooltip formatter={(value) => value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} />
                 <Legend />
-                <Bar dataKey="Net Income" fill={CHART_COLORS.profit} />
+                <ReferenceLine y={0} stroke="#000" />
+                <Bar dataKey="Net Income" fill={CHART_COLORS.profit}>
+                  {filteredData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry['Net Income'] >= 0 ? CHART_COLORS.profit : CHART_COLORS.expense} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </Paper>
