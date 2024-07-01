@@ -84,6 +84,25 @@ function Dashboard() {
     { name: 'Profit', value: totals.totalProfit },
   ];
 
+  const cardStyle = {
+    p: 3,
+    height: '100%',
+    background: theme.palette.background.paper,
+    border: `1px solid ${theme.palette.divider}`,
+    borderRadius: 2,
+    boxShadow: theme.shadows[3],
+    transition: 'box-shadow 0.3s ease-in-out',
+    '&:hover': {
+      boxShadow: theme.shadows[6],
+    },
+  };
+
+  const cardTitleStyle = {
+    fontWeight: 600,
+    mb: 2,
+    color: theme.palette.text.primary,
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -94,7 +113,7 @@ function Dashboard() {
 
   return (
     <Box sx={{ p: 4 }} className="fade-in">
-      <Typography variant="h4" gutterBottom fontWeight={700} color="text.primary">
+      <Typography variant="h4" gutterBottom fontWeight={700} color="text.primary" sx={{ mb: 4 }}>
         Financial Dashboard
       </Typography>
       {error && (
@@ -102,9 +121,9 @@ function Dashboard() {
           {error}
         </Typography>
       )}
-      <Paper id="date-filter-card" className="dashboard-card" sx={{ p: 3, mb: 4, background: theme.palette.background.paper }}>
+      <Paper id="date-filter-card" sx={{ ...cardStyle, mb: 4 }}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <Grid container spacing={2} alignItems="center">
+          <Grid container spacing={3} alignItems="center">
             <Grid item xs={12} sm={6} md={3}>
               <DatePicker
                 label="Start Date"
@@ -126,59 +145,59 @@ function Dashboard() {
       </Paper>
       <Grid container spacing={4}>
         <Grid item xs={12} md={4}>
-          <Paper id="total-income-card" className="dashboard-card" sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
-            <Typography variant="h6" gutterBottom fontWeight={600}>
+          <Paper id="total-income-card" sx={cardStyle}>
+            <Typography variant="h6" sx={cardTitleStyle}>
               Total Income
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <DollarSign size={24} color={theme.palette.success.main} />
-              <Typography variant="h4" sx={{ ml: 1, fontWeight: 700 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '70%' }}>
+              <DollarSign size={36} color={theme.palette.success.main} />
+              <Typography variant="h4" sx={{ mt: 2, fontWeight: 700 }}>
                 {totals.totalIncome.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
               </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
+                <ArrowUp size={16} color={theme.palette.success.main} style={{ marginRight: 4 }} />
+                5% increase from last month
+              </Typography>
             </Box>
-            <Typography variant="body2" color="text.secondary">
-              <ArrowUp size={16} color={theme.palette.success.main} style={{ marginRight: 4 }} />
-              5% increase from last month
-            </Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper id="total-expense-card" className="dashboard-card" sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
-            <Typography variant="h6" gutterBottom fontWeight={600}>
+          <Paper id="total-expense-card" sx={cardStyle}>
+            <Typography variant="h6" sx={cardTitleStyle}>
               Total Expense
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <DollarSign size={24} color={theme.palette.error.main} />
-              <Typography variant="h4" sx={{ ml: 1, fontWeight: 700 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '70%' }}>
+              <DollarSign size={36} color={theme.palette.error.main} />
+              <Typography variant="h4" sx={{ mt: 2, fontWeight: 700 }}>
                 {totals.totalExpense.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
               </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
+                <ArrowDown size={16} color={theme.palette.error.main} style={{ marginRight: 4 }} />
+                2% decrease from last month
+              </Typography>
             </Box>
-            <Typography variant="body2" color="text.secondary">
-              <ArrowDown size={16} color={theme.palette.error.main} style={{ marginRight: 4 }} />
-              2% decrease from last month
-            </Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper id="net-profit-card" className="dashboard-card" sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
-            <Typography variant="h6" gutterBottom fontWeight={600}>
+          <Paper id="net-profit-card" sx={cardStyle}>
+            <Typography variant="h6" sx={cardTitleStyle}>
               Net Profit
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <DollarSign size={24} color={theme.palette.info.main} />
-              <Typography variant="h4" sx={{ ml: 1, fontWeight: 700 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '70%' }}>
+              <DollarSign size={36} color={theme.palette.info.main} />
+              <Typography variant="h4" sx={{ mt: 2, fontWeight: 700 }}>
                 {totals.totalProfit.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
               </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
+                <ArrowUp size={16} color={theme.palette.info.main} style={{ marginRight: 4 }} />
+                8% increase from last month
+              </Typography>
             </Box>
-            <Typography variant="body2" color="text.secondary">
-              <ArrowUp size={16} color={theme.palette.info.main} style={{ marginRight: 4 }} />
-              8% increase from last month
-            </Typography>
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Paper id="financial-overview-card" className="dashboard-card" sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
-            <Typography variant="h6" gutterBottom fontWeight={600}>
+          <Paper id="financial-overview-card" sx={cardStyle}>
+            <Typography variant="h6" sx={cardTitleStyle}>
               Financial Overview
             </Typography>
             <ResponsiveContainer width="100%" height={300}>
@@ -204,8 +223,8 @@ function Dashboard() {
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Paper id="income-expense-trend-card" className="dashboard-card" sx={{ p: 3, height: '100%', background: theme.palette.background.paper }}>
-            <Typography variant="h6" gutterBottom fontWeight={600}>
+          <Paper id="income-expense-trend-card" sx={cardStyle}>
+            <Typography variant="h6" sx={cardTitleStyle}>
               Income vs Expense Trend
             </Typography>
             <ResponsiveContainer width="100%" height={300}>
@@ -222,8 +241,8 @@ function Dashboard() {
           </Paper>
         </Grid>
         <Grid item xs={12}>
-          <Paper id="monthly-net-income-card" className="dashboard-card" sx={{ p: 3, background: theme.palette.background.paper }}>
-            <Typography variant="h6" gutterBottom fontWeight={600}>
+          <Paper id="monthly-net-income-card" sx={cardStyle}>
+            <Typography variant="h6" sx={cardTitleStyle}>
               Monthly Net Income
             </Typography>
             <ResponsiveContainer width="100%" height={300}>
