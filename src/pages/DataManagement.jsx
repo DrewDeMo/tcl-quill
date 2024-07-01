@@ -400,4 +400,61 @@ const DataManagement = () => {
                   <StyledTableCell>
                     {editingIndex === index ? (
                       <>
-                        <Tooltip title="
+                        <Tooltip title="Save">
+                          <StyledIconButton onClick={() => handleEditSave(index)} color="primary">
+                            <Save />
+                          </StyledIconButton>
+                        </Tooltip>
+                        <Tooltip title="Cancel">
+                          <StyledIconButton onClick={handleEditCancel} color="secondary">
+                            <Cancel />
+                          </StyledIconButton>
+                        </Tooltip>
+                      </>
+                    ) : (
+                      <>
+                        <Tooltip title="Edit">
+                          <StyledIconButton onClick={() => handleEditStart(index)} color="primary">
+                            <Edit />
+                          </StyledIconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <StyledIconButton onClick={() => handleDelete(index)} color="secondary">
+                            <Trash2 />
+                          </StyledIconButton>
+                        </Tooltip>
+                      </>
+                    )}
+                  </StyledTableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+      <Dialog
+        open={openClearDialog}
+        onClose={() => setOpenClearDialog(false)}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">{"Clear all data?"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to clear all financial data? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenClearDialog(false)} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleClearData} color="error" autoFocus>
+            Clear All Data
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+}
+
+export default DataManagement;
