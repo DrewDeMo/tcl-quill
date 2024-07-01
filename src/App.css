@@ -4,7 +4,7 @@
 :root {
   --primary-color: #cc5500;
   --secondary-color: #ffffff;
-  --background-light: #f4f4f9;
+  --background-light: #f5f5f4;
   --background-dark: #121212;
   --text-light: #ffffff;
   --text-dark: #000000;
@@ -40,12 +40,15 @@ body {
   .project-title {
     display: none;
   }
+
   .project-icons {
     display: flex;
   }
+
   .project-icons button {
     display: none;
   }
+
   .project-icons .MuiIconButton-root {
     margin-left: 16px;
   }
@@ -55,7 +58,10 @@ body {
   margin-left: 16px;
 }
 
-html, body, #root, .App {
+html,
+body,
+#root,
+.App {
   height: 100%;
   width: 100%;
   margin: 0;
@@ -83,7 +89,9 @@ body[data-theme='dark'] {
 }
 
 /* Additional Global Styles */
-.MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 {
+.MuiTypography-h4,
+.MuiTypography-h5,
+.MuiTypography-h6 {
   font-weight: 600;
 }
 
@@ -92,7 +100,7 @@ body[data-theme='dark'] {
   color: black;
 }
 
-body[data-theme=light] .MuiPaper-root  {
+body[data-theme=light] .MuiPaper-root {
   box-shadow: none !important;
 }
 

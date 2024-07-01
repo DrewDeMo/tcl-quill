@@ -34,6 +34,16 @@ const commonSettings = {
           WebkitBackdropFilter: 'blur(5px)',
           background: 'rgba(255, 255, 255, 0.1)',
           boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+          transition: 'all 0.3s ease-in-out',
+          '&.dashboard-card': {
+            '&:hover': {
+              transform: 'translateY(-5px)',
+              boxShadow: '0 8px 25px rgba(0, 0, 0, 0.2)',
+            },
+            '@media (max-width: 600px)': {
+              borderWidth: '1px',
+            },
+          },
         },
       },
     },
@@ -96,7 +106,7 @@ const darkTheme = createTheme({
     primary: {
       main: '#cc5500',
       light: '#ff7733',
-      dark: '#993d00',
+      dark: '#993d00'
     },
     secondary: {
       main: '#90caf9',
