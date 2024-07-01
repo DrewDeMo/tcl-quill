@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../firebase';
-import { TextField, Button, Typography, Paper, Box, Grid, Link, CssBaseline } from '@mui/material';
+import { TextField, Button, Typography, Paper, Box, Grid, CssBaseline } from '@mui/material';
 import { LogIn, Mail, Lock } from 'react-feather';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-const theme = createTheme();
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#1976d2', // You can adjust this color to match your brand
+    },
+  },
+});
 
 const SignIn = () => {
   const [email, setEmail] = useState('');
@@ -32,7 +38,7 @@ const SignIn = () => {
           sm={4}
           md={7}
           sx={{
-            backgroundImage: 'url(https://source.unsplash.com/random?finance)',
+            backgroundImage: 'url(https://images.unsplash.com/photo-1551260827-090fb1329972?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80)',
             backgroundRepeat: 'no-repeat',
             backgroundColor: (t) =>
               t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
@@ -48,17 +54,19 @@ const SignIn = () => {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
             }}
           >
-            <Typography component="h1" variant="h5">
+            <Typography component="h1" variant="h4" sx={{ mb: 4, fontWeight: 'bold' }}>
               Sign In
             </Typography>
             {error && (
-              <Typography color="error" sx={{ mt: 2 }}>
+              <Typography color="error" sx={{ mt: 2, mb: 2 }}>
                 {error}
               </Typography>
             )}
-            <Box component="form" noValidate onSubmit={handleSignIn} sx={{ mt: 1 }}>
+            <Box component="form" noValidate onSubmit={handleSignIn} sx={{ mt: 1, width: '100%' }}>
               <TextField
                 margin="normal"
                 required
@@ -93,23 +101,11 @@ const SignIn = () => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                sx={{ mt: 3, mb: 2 }}
+                sx={{ mt: 3, mb: 2, py: 1.5 }}
                 startIcon={<LogIn />}
               >
                 Sign In
               </Button>
-              <Grid container>
-                <Grid item xs>
-                  <Link href="#" variant="body2">
-                    Forgot password?
-                  </Link>
-                </Grid>
-                <Grid item>
-                  <Link href="#" variant="body2">
-                    {"Don't have an account? Sign Up"}
-                  </Link>
-                </Grid>
-              </Grid>
             </Box>
           </Box>
         </Grid>
