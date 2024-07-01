@@ -50,9 +50,11 @@ function FinancialProjections() {
   }, [data, growthRate, projectionMonths]);
 
   useEffect(() => {
-    const combinedData = [...data, ...projections];
+    const historicalDataCount = Math.max(0, data.length - projectionMonths);
+    const relevantHistoricalData = data.slice(historicalDataCount);
+    const combinedData = [...relevantHistoricalData, ...projections];
     setChartData(combinedData);
-  }, [data, projections]);
+  }, [data, projections, projectionMonths]);
 
   const generateProjections = () => {
     const lastMonth = data[data.length - 1];
