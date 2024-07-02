@@ -5,7 +5,7 @@ import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContaine
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { Edit, Trash2, PlusCircle, Move, Palette } from 'react-feather';
+import { Edit, Trash2, PlusCircle, Move, Droplet } from 'react-feather';
 
 const CHART_TYPES = {
     LINE: 'line',
@@ -21,6 +21,17 @@ const DEFAULT_KPIS = [
     { id: 'profit', title: 'Net Profit', type: CHART_TYPES.LINE, dataKey: 'Net Income', color: DEFAULT_COLORS[2] },
     { id: 'profitMargin', title: 'Profit Margin', type: CHART_TYPES.PIE, dataKey: 'NP Margin', color: DEFAULT_COLORS[3] },
 ];
+
+import React, { useState, useEffect } from 'react';
+import { Typography, Paper, Grid, Box, Button, TextField, MenuItem, IconButton, Tooltip, useTheme, Popover } from '@mui/material';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, Legend } from 'recharts';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '../firebase';
+import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { Edit, Trash2, PlusCircle, Move, Droplet } from 'react-feather';
+
+// ... (rest of the constants remain the same)
 
 function CustomColorPicker({ color, onChange }) {
     const [anchorEl, setAnchorEl] = useState(null);
@@ -43,7 +54,7 @@ function CustomColorPicker({ color, onChange }) {
     return (
         <>
             <IconButton onClick={handleClick} style={{ color: color }}>
-                <Palette />
+                <Droplet />
             </IconButton>
             <Popover
                 open={open}
@@ -74,6 +85,7 @@ function CustomColorPicker({ color, onChange }) {
         </>
     );
 }
+
 
 function CustomizableDashboard() {
     const theme = useTheme();
