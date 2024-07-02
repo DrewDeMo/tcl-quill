@@ -1,93 +1,54 @@
-import React, { useState, useEffect } from 'react';
-import { Typography, Paper, Grid, CircularProgress, Box, TextField, useTheme, Button } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Typography, Paper, Grid, CircularProgress, Box, useTheme } from '@mui/material';
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, ReferenceLine } from 'recharts';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '../firebase';
-import { collection, doc, getDoc } from 'firebase/firestore';
-import dayjs from 'dayjs';
-import { TrendingUp, TrendingDown, DollarSign, Calendar, RefreshCw } from 'react-feather';
+import { TrendingUp, TrendingDown, DollarSign } from 'react-feather';
+import { useFirebase } from '../hooks/useFirebase';
+import { useAuth } from '../hooks/useAuth';
+import DateRangeSelector from '../components/DateRangeSelector';
+import { calculateTotals, calculateKPIs } from '../utils/calculations';
 
-// Refined color palette for financial charts
 const CHART_COLORS = {
-  income: '#66BB6A',  // Softer green
-  expense: '#EF5350',  // Softer red
-  profit: '#42A5F5',  // Softer blue
-  neutral: '#BDBDBD'  // Neutral gray
+  income: '#66BB6A',
+  expense: '#EF5350',
+  profit: '#42A5F5',
+  neutral: '#BDBDBD'
 };
 
 function Dashboard() {
   const theme = useTheme();
-  const [user] = useAuthState(auth);
+  const { user } = useAuth();
+  const { getDocument, loading, error } = useFirebase();
   const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
+  const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
 
   useEffect(() => {
     const loadData = async () => {
       if (user) {
-        try {
-          setLoading(true);
-          const userDocRef = doc(collection(db, 'users'), user.uid);
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            setData(userData.financialData || []);
-            setFilteredData(userData.financialData || []);
-          }
-          setError(null);
-        } catch (err) {
-          console.error("Error loading data:", err);
-          setError("Failed to load data. Please try again.");
-        } finally {
-          setLoading(false);
+        const userData = await getDocument('users', user.uid);
+        if (userData && userData.financialData) {
+          setData(userData.financialData);
         }
       }
     };
 
     loadData();
-  }, [user]);
+  }, [user, getDocument]);
 
-  useEffect(() => {
-    filterData();
-  }, [startDate, endDate, data]);
-
-  const filterData = () => {
-    if (!startDate && !endDate) {
-      setFilteredData(data);
-      return;
-    }
-
-    const filtered = data.filter((item) => {
-      const itemDate = dayjs(item.Month, 'MMMM YYYY');
-      const isAfterStart = startDate ? itemDate.isAfter(startDate) || itemDate.isSame(startDate) : true;
-      const isBeforeEnd = endDate ? itemDate.isBefore(endDate) || itemDate.isSame(endDate) : true;
-      return isAfterStart && isBeforeEnd;
+  const filteredData = useMemo(() => {
+    if (!dateRange.startDate || !dateRange.endDate) return data;
+    return data.filter(item => {
+      const itemDate = new Date(item.Month);
+      return itemDate >= dateRange.startDate && itemDate <= dateRange.endDate;
     });
+  }, [data, dateRange]);
 
-    setFilteredData(filtered);
-  };
-
-  const calculateTotals = () => {
-    return filteredData.reduce((acc, curr) => {
-      acc.totalIncome += parseFloat(curr['Total Income']);
-      acc.totalExpense += parseFloat(curr['Total Expense']);
-      acc.totalProfit += parseFloat(curr['Net Income']);
-      return acc;
-    }, { totalIncome: 0, totalExpense: 0, totalProfit: 0 });
-  };
-
-  const totals = calculateTotals();
+  const totals = useMemo(() => calculateTotals(filteredData), [filteredData]);
+  const kpis = useMemo(() => calculateKPIs(filteredData), [filteredData]);
 
   const pieChartData = [
     { name: 'Income', value: totals.totalIncome },
     { name: 'Expense', value: totals.totalExpense },
-    { name: 'Profit', value: totals.totalProfit },
+    { name: 'Net Income', value: totals.totalNetIncome },
   ];
 
   const cardStyle = {
@@ -109,28 +70,18 @@ function Dashboard() {
     color: theme.palette.text.primary,
   };
 
-  const handleApplyDateFilter = () => {
-    filterData();
-  };
-
-  const handleResetDateFilter = () => {
-    setStartDate(null);
-    setEndDate(null);
-    setFilteredData(data);
-  };
-
-  const calculateChartDomain = (dataKey) => {
-    const values = filteredData.map(item => parseFloat(item[dataKey]));
-    const minValue = Math.min(...values);
-    const maxValue = Math.max(...values);
-    const absMax = Math.max(Math.abs(minValue), Math.abs(maxValue));
-    return [-absMax, absMax];
-  };
-
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
         <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box p={4}>
+        <Typography color="error">{error}</Typography>
       </Box>
     );
   }
@@ -140,112 +91,56 @@ function Dashboard() {
       <Typography variant="h4" gutterBottom fontWeight={700} color="text.primary" sx={{ mb: 4 }}>
         Financial Dashboard
       </Typography>
-      {error && (
-        <Typography color="error" gutterBottom>
-          {error}
-        </Typography>
-      )}
-      <Paper id="date-filter-card" sx={{ ...cardStyle, mb: 4 }}>
-        <Typography variant="h6" sx={cardTitleStyle}>
-          Date Range Filter
-        </Typography>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <Grid container spacing={3} alignItems="center">
-            <Grid item xs={12} sm={6} md={3}>
-              <DatePicker
-                label="Start Date"
-                value={startDate}
-                onChange={(newValue) => setStartDate(newValue)}
-                renderInput={(params) => <TextField {...params} fullWidth />}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <DatePicker
-                label="End Date"
-                value={endDate}
-                onChange={(newValue) => setEndDate(newValue)}
-                renderInput={(params) => <TextField {...params} fullWidth />}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleApplyDateFilter}
-                startIcon={<Calendar />}
-                fullWidth
-              >
-                Apply Filter
-              </Button>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={handleResetDateFilter}
-                startIcon={<RefreshCw />}
-                fullWidth
-              >
-                Reset Filter
-              </Button>
-            </Grid>
-          </Grid>
-        </LocalizationProvider>
-      </Paper>
+
+      <DateRangeSelector
+        startDate={dateRange.startDate}
+        endDate={dateRange.endDate}
+        onStartDateChange={(date) => setDateRange(prev => ({ ...prev, startDate: date }))}
+        onEndDateChange={(date) => setDateRange(prev => ({ ...prev, endDate: date }))}
+      />
+
       <Grid container spacing={4}>
         <Grid item xs={12} md={4}>
-          <Paper id="total-income-card" sx={cardStyle}>
+          <Paper sx={cardStyle}>
             <Typography variant="h6" sx={cardTitleStyle}>
               Total Income
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '70%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '70%' }}>
               <TrendingUp size={36} color={CHART_COLORS.income} />
-              <Typography variant="h4" sx={{ mt: 2, fontWeight: 700 }}>
+              <Typography variant="h4" sx={{ ml: 2, fontWeight: 700 }}>
                 {totals.totalIncome.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
-                <TrendingUp size={16} color={CHART_COLORS.income} style={{ marginRight: 4 }} />
-                5% increase from last month
               </Typography>
             </Box>
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper id="total-expense-card" sx={cardStyle}>
+          <Paper sx={cardStyle}>
             <Typography variant="h6" sx={cardTitleStyle}>
               Total Expense
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '70%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '70%' }}>
               <TrendingDown size={36} color={CHART_COLORS.expense} />
-              <Typography variant="h4" sx={{ mt: 2, fontWeight: 700 }}>
+              <Typography variant="h4" sx={{ ml: 2, fontWeight: 700 }}>
                 {totals.totalExpense.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
-                <TrendingDown size={16} color={CHART_COLORS.expense} style={{ marginRight: 4 }} />
-                2% decrease from last month
               </Typography>
             </Box>
           </Paper>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Paper id="net-profit-card" sx={cardStyle}>
+          <Paper sx={cardStyle}>
             <Typography variant="h6" sx={cardTitleStyle}>
-              Net Profit
+              Net Income
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '70%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '70%' }}>
               <DollarSign size={36} color={CHART_COLORS.profit} />
-              <Typography variant="h4" sx={{ mt: 2, fontWeight: 700 }}>
-                {totals.totalProfit.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
-                <TrendingUp size={16} color={CHART_COLORS.profit} style={{ marginRight: 4 }} />
-                8% increase from last month
+              <Typography variant="h4" sx={{ ml: 2, fontWeight: 700 }}>
+                {totals.totalNetIncome.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
               </Typography>
             </Box>
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Paper id="financial-overview-card" sx={cardStyle}>
+          <Paper sx={cardStyle}>
             <Typography variant="h6" sx={cardTitleStyle}>
               Financial Overview
             </Typography>
@@ -272,7 +167,7 @@ function Dashboard() {
           </Paper>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Paper id="income-expense-trend-card" sx={cardStyle}>
+          <Paper sx={cardStyle}>
             <Typography variant="h6" sx={cardTitleStyle}>
               Income vs Expense Trend
             </Typography>
@@ -290,25 +185,28 @@ function Dashboard() {
           </Paper>
         </Grid>
         <Grid item xs={12}>
-          <Paper id="monthly-net-income-card" sx={cardStyle}>
+          <Paper sx={cardStyle}>
             <Typography variant="h6" sx={cardTitleStyle}>
-              Monthly Net Income
+              Key Performance Indicators
             </Typography>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={filteredData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="Month" />
-                <YAxis domain={calculateChartDomain('Net Income')} />
-                <Tooltip formatter={(value) => value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })} />
-                <Legend />
-                <ReferenceLine y={0} stroke="#000" />
-                <Bar dataKey="Net Income" fill={CHART_COLORS.profit}>
-                  {filteredData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry['Net Income'] >= 0 ? CHART_COLORS.profit : CHART_COLORS.expense} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="subtitle1">Gross Profit Margin</Typography>
+                <Typography variant="h5">{kpis.grossProfitMargin}%</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="subtitle1">Net Profit Margin</Typography>
+                <Typography variant="h5">{kpis.netProfitMargin}%</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="subtitle1">Operating Expense Ratio</Typography>
+                <Typography variant="h5">{kpis.operatingExpenseRatio}%</Typography>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Typography variant="subtitle1">Revenue Growth Rate</Typography>
+                <Typography variant="h5">{kpis.revenueGrowthRate}%</Typography>
+              </Grid>
+            </Grid>
           </Paper>
         </Grid>
       </Grid>
