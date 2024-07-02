@@ -4,9 +4,8 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Edit, Trash2, X } from 'react-feather';
+import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Edit, Trash2, X, Briefcase, ShoppingCart, CreditCard, Printer, Monitor, Smartphone, Wifi, FileText, Coffee, Inbox, Send, Users, Award, Zap } from 'react-feather';
 import dayjs from 'dayjs';
-import * as tf from '@tensorflow/tfjs';
 
 const CHART_COLORS = {
     income: '#66BB6A',
@@ -14,6 +13,23 @@ const CHART_COLORS = {
     cashFlow: '#42A5F5',
     forecast: '#FFA726',
 };
+
+const TRANSACTION_CATEGORIES = [
+    { name: 'Client Payments', icon: Briefcase, type: 'income' },
+    { name: 'Ad Revenue', icon: DollarSign, type: 'income' },
+    { name: 'Affiliate Income', icon: Users, type: 'income' },
+    { name: 'Software Subscriptions', icon: CreditCard, type: 'expense' },
+    { name: 'Print Advertising Costs', icon: Printer, type: 'expense' },
+    { name: 'Digital Advertising Costs', icon: Monitor, type: 'expense' },
+    { name: 'Mobile Advertising Costs', icon: Smartphone, type: 'expense' },
+    { name: 'Internet and Utilities', icon: Wifi, type: 'expense' },
+    { name: 'Office Supplies', icon: ShoppingCart, type: 'expense' },
+    { name: 'Freelancer Payments', icon: Users, type: 'expense' },
+    { name: 'Marketing Tools', icon: Zap, type: 'expense' },
+    { name: 'Professional Development', icon: Award, type: 'expense' },
+    { name: 'Miscellaneous Income', icon: Inbox, type: 'income' },
+    { name: 'Miscellaneous Expense', icon: Send, type: 'expense' },
+];
 
 function CashFlowManagement() {
     const theme = useTheme();
@@ -27,6 +43,7 @@ function CashFlowManagement() {
         description: '',
         amount: '',
         type: 'income',
+        category: '',
     });
     const [editingTransaction, setEditingTransaction] = useState(null);
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -35,8 +52,6 @@ function CashFlowManagement() {
     const [cashFlowForecast, setCashFlowForecast] = useState([]);
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
-    const [cashBurnRate, setCashBurnRate] = useState(0);
-    const [runway, setRunway] = useState(0);
 
     useEffect(() => {
         const loadData = async () => {
@@ -65,7 +80,6 @@ function CashFlowManagement() {
 
     useEffect(() => {
         generateCashFlowForecast();
-        calculateCashBurnRateAndRunway();
     }, [cashFlowData, forecastMonths]);
 
     const handleInputChange = (e) => {
@@ -78,7 +92,7 @@ function CashFlowManagement() {
     };
 
     const addTransaction = async () => {
-        if (newTransaction.description && newTransaction.amount) {
+        if (newTransaction.description && newTransaction.amount && newTransaction.category) {
             const transactionToAdd = {
                 ...newTransaction,
                 id: Date.now().toString(),
@@ -87,6 +101,7 @@ function CashFlowManagement() {
             const updatedCashFlowData = [...cashFlowData, transactionToAdd];
             setCashFlowData(updatedCashFlowData);
 
+            // Update Firestore
             if (user) {
                 const userDocRef = doc(collection(db, 'users'), user.uid);
                 await updateDoc(userDocRef, { cashFlowData: updatedCashFlowData });
@@ -97,6 +112,7 @@ function CashFlowManagement() {
                 description: '',
                 amount: '',
                 type: 'income',
+                category: '',
             });
             showSnackbar('Transaction added successfully');
         }
@@ -113,6 +129,7 @@ function CashFlowManagement() {
             );
             setCashFlowData(updatedCashFlowData);
 
+            // Update Firestore
             if (user) {
                 const userDocRef = doc(collection(db, 'users'), user.uid);
                 await updateDoc(userDocRef, { cashFlowData: updatedCashFlowData });
@@ -138,6 +155,7 @@ function CashFlowManagement() {
             const updatedCashFlowData = cashFlowData.filter(t => t.id !== deleteTransactionId);
             setCashFlowData(updatedCashFlowData);
 
+            // Update Firestore
             if (user) {
                 const userDocRef = doc(collection(db, 'users'), user.uid);
                 await updateDoc(userDocRef, { cashFlowData: updatedCashFlowData });
@@ -155,58 +173,46 @@ function CashFlowManagement() {
             return { ...transaction, balance };
         });
     };
-    const generateCashFlowForecast = async () => {
-        if (cashFlowData.length < 2) return;
 
+    const generateCashFlowForecast = () => {
         const sortedData = [...cashFlowData].sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
-        const cashFlowValues = sortedData.map(d => d.type === 'income' ? d.amount : -d.amount);
+        const lastDate = sortedData.length > 0 ? dayjs(sortedData[sortedData.length - 1].date) : dayjs();
 
-        const inputTensor = tf.tensor2d(cashFlowValues, [cashFlowValues.length, 1]);
-        const normalizedInput = inputTensor.sub(inputTensor.min()).div(inputTensor.max().sub(inputTensor.min()));
+        const monthlyAverages = TRANSACTION_CATEGORIES.reduce((acc, category) => {
+            const categoryTransactions = sortedData.filter(t => t.category === category.name);
+            const total = categoryTransactions.reduce((sum, t) => sum + t.amount, 0);
+            acc[category.name] = total / Math.max(1, categoryTransactions.length);
+            return acc;
+        }, {});
 
-        const model = tf.sequential();
-        model.add(tf.layers.lstm({ units: 8, inputShape: [1, 1] }));
-        model.add(tf.layers.dense({ units: 1 }));
-        model.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
-
-        const xs = normalizedInput.slice([0, 0], [cashFlowValues.length - 1, 1]).expandDims(1);
-        const ys = normalizedInput.slice([1, 0], [cashFlowValues.length - 1, 1]);
-
-        await model.fit(xs, ys, { epochs: 100, verbose: 0 });
-
-        const lastDataPoint = normalizedInput.slice([-1]).reshape([1, 1, 1]);
+        let forecastBalance = sortedData.length > 0 ? sortedData[sortedData.length - 1].balance : 0;
         const forecast = [];
 
         for (let i = 1; i <= forecastMonths; i++) {
-            const pred = model.predict(lastDataPoint);
-            const predValue = pred.mul(inputTensor.max().sub(inputTensor.min())).add(inputTensor.min()).dataSync()[0];
-            forecast.push({
-                date: dayjs(sortedData[sortedData.length - 1].date).add(i, 'month').format('YYYY-MM-DD'),
-                amount: predValue,
-                type: predValue >= 0 ? 'income' : 'expense'
+            const forecastDate = lastDate.add(i, 'month');
+            let monthlyIncome = 0;
+            let monthlyExpense = 0;
+
+            Object.entries(monthlyAverages).forEach(([category, average]) => {
+                const categoryType = TRANSACTION_CATEGORIES.find(c => c.name === category).type;
+                if (categoryType === 'income') {
+                    monthlyIncome += average;
+                } else {
+                    monthlyExpense += average;
+                }
             });
-            lastDataPoint.dispose();
-            lastDataPoint = pred.reshape([1, 1, 1]);
+
+            forecastBalance += monthlyIncome - monthlyExpense;
+
+            forecast.push({
+                date: forecastDate.format('YYYY-MM-DD'),
+                income: monthlyIncome,
+                expense: monthlyExpense,
+                balance: forecastBalance,
+            });
         }
 
         setCashFlowForecast(forecast);
-    };
-
-    const calculateCashBurnRateAndRunway = () => {
-        if (cashFlowData.length < 2) return;
-
-        const sortedData = [...cashFlowData].sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
-        const totalCashFlow = sortedData.reduce((sum, transaction) =>
-            transaction.type === 'income' ? sum + transaction.amount : sum - transaction.amount, 0);
-        const monthsDiff = dayjs(sortedData[sortedData.length - 1].date).diff(sortedData[0].date, 'month');
-
-        const burnRate = -totalCashFlow / monthsDiff;
-        setCashBurnRate(burnRate);
-
-        const lastBalance = sortedData.reduce((balance, transaction) =>
-            transaction.type === 'income' ? balance + transaction.amount : balance - transaction.amount, 0);
-        const runwayMonths = burnRate > 0 ? lastBalance / burnRate : Infinity;
-        setRunway(runwayMonths);
     };
 
     const showSnackbar = (message) => {
@@ -221,6 +227,35 @@ function CashFlowManagement() {
         setSnackbarOpen(false);
     };
 
+    const getCategoryIcon = (categoryName) => {
+        const category = TRANSACTION_CATEGORIES.find(cat => cat.name === categoryName);
+        return category ? category.icon : FileText;
+    };
+
+    const getCategoryColor = (categoryName) => {
+        const category = TRANSACTION_CATEGORIES.find(cat => cat.name === categoryName);
+        return category && category.type === 'income' ? CHART_COLORS.income : CHART_COLORS.expense;
+    };
+
+    const cardStyle = {
+        p: 3,
+        height: '100%',
+        background: theme.palette.background.paper,
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: 2,
+        boxShadow: theme.shadows[3],
+        transition: 'box-shadow 0.3s ease-in-out',
+        '&:hover': {
+            boxShadow: theme.shadows[6],
+        },
+    };
+
+    const cardTitleStyle = {
+        fontWeight: 600,
+        mb: 2,
+        color: theme.palette.text.primary,
+    };
+
     if (loading) {
         return (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -228,7 +263,6 @@ function CashFlowManagement() {
             </Box>
         );
     }
-
     return (
         <Box sx={{ p: 4 }} className="fade-in">
             <Typography variant="h4" gutterBottom fontWeight={700} color="text.primary" sx={{ mb: 4 }}>
@@ -241,9 +275,9 @@ function CashFlowManagement() {
             )}
             <Grid container spacing={4}>
                 <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Add Transaction
+                    <Paper sx={cardStyle}>
+                        <Typography variant="h6" sx={cardTitleStyle}>
+                            {editingTransaction ? 'Edit Transaction' : 'Add Transaction'}
                         </Typography>
                         <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
@@ -252,7 +286,7 @@ function CashFlowManagement() {
                                     label="Date"
                                     type="date"
                                     name="date"
-                                    value={newTransaction.date}
+                                    value={editingTransaction ? editingTransaction.date : newTransaction.date}
                                     onChange={handleInputChange}
                                     InputLabelProps={{ shrink: true }}
                                 />
@@ -262,7 +296,7 @@ function CashFlowManagement() {
                                     fullWidth
                                     label="Description"
                                     name="description"
-                                    value={newTransaction.description}
+                                    value={editingTransaction ? editingTransaction.description : newTransaction.description}
                                     onChange={handleInputChange}
                                 />
                             </Grid>
@@ -272,16 +306,18 @@ function CashFlowManagement() {
                                     label="Amount"
                                     type="number"
                                     name="amount"
-                                    value={newTransaction.amount}
+                                    value={editingTransaction ? editingTransaction.amount : newTransaction.amount}
                                     onChange={handleInputChange}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
                                 <FormControl fullWidth>
-                                    <InputLabel>Type</InputLabel>
+                                    <InputLabel id="transaction-type-label">Type</InputLabel>
                                     <Select
+                                        labelId="transaction-type-label"
+                                        label="Type"
                                         name="type"
-                                        value={newTransaction.type}
+                                        value={editingTransaction ? editingTransaction.type : newTransaction.type}
                                         onChange={handleInputChange}
                                     >
                                         <MenuItem value="income">Income</MenuItem>
@@ -289,42 +325,54 @@ function CashFlowManagement() {
                                     </Select>
                                 </FormControl>
                             </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <FormControl fullWidth>
+                                    <InputLabel id="transaction-category-label">Category</InputLabel>
+                                    <Select
+                                        labelId="transaction-category-label"
+                                        label="Category"
+                                        name="category"
+                                        value={editingTransaction ? editingTransaction.category : newTransaction.category}
+                                        onChange={handleInputChange}
+                                    >
+                                        {TRANSACTION_CATEGORIES.map(category => (
+                                            <MenuItem key={category.name} value={category.name}>{category.name}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Grid>
                             <Grid item xs={12}>
-                                <Button variant="contained" onClick={addTransaction}>
-                                    Add Transaction
-                                </Button>
+                                {editingTransaction ? (
+                                    <>
+                                        <Button variant="contained" color="primary" onClick={updateTransaction} startIcon={<Edit />}>
+                                            Update Transaction
+                                        </Button>
+                                        <Button variant="outlined" color="secondary" onClick={() => setEditingTransaction(null)} startIcon={<X />} sx={{ ml: 2 }}>
+                                            Cancel
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button variant="contained" color="primary" onClick={addTransaction} startIcon={<DollarSign />}>
+                                        Add Transaction
+                                    </Button>
+                                )}
                             </Grid>
                         </Grid>
                     </Paper>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" gutterBottom>
-                            Cash Flow Analytics
-                        </Typography>
-                        <Typography variant="body1">
-                            Cash Burn Rate: ${cashBurnRate.toFixed(2)}/month
-                        </Typography>
-                        <Typography variant="body1">
-                            Runway: {runway.toFixed(1)} months
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                            Forecast Months: {forecastMonths}
-                        </Typography>
-                        <TextField
-                            type="number"
-                            label="Forecast Months"
-                            value={forecastMonths}
-                            onChange={(e) => setForecastMonths(parseInt(e.target.value))}
-                            InputProps={{ inputProps: { min: 1, max: 24 } }}
-                        />
-                    </Paper>
-                </Grid>
-                <Grid item xs={12}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" gutterBottom>
+                    <Paper sx={cardStyle}>
+                        <Typography variant="h6" sx={cardTitleStyle}>
                             Cash Flow Forecast
                         </Typography>
+                        <TextField
+                            fullWidth
+                            label="Forecast Months"
+                            type="number"
+                            value={forecastMonths}
+                            onChange={(e) => setForecastMonths(parseInt(e.target.value))}
+                            sx={{ mb: 2 }}
+                        />
                         <ResponsiveContainer width="100%" height={300}>
                             <LineChart data={[...calculateCashFlow(), ...cashFlowForecast]}>
                                 <CartesianGrid strokeDasharray="3 3" />
@@ -333,14 +381,16 @@ function CashFlowManagement() {
                                 <Tooltip />
                                 <Legend />
                                 <Line type="monotone" dataKey="balance" stroke={CHART_COLORS.cashFlow} name="Actual Balance" />
-                                <Line type="monotone" dataKey="amount" stroke={CHART_COLORS.forecast} name="Forecast" strokeDasharray="5 5" />
+                                <Line type="monotone" dataKey="income" stroke={CHART_COLORS.income} name="Income" />
+                                <Line type="monotone" dataKey="expense" stroke={CHART_COLORS.expense} name="Expense" />
+                                <Line type="monotone" dataKey="balance" stroke={CHART_COLORS.forecast} name="Forecast Balance" strokeDasharray="5 5" />
                             </LineChart>
                         </ResponsiveContainer>
                     </Paper>
                 </Grid>
                 <Grid item xs={12}>
-                    <Paper sx={{ p: 3 }}>
-                        <Typography variant="h6" gutterBottom>
+                    <Paper sx={cardStyle}>
+                        <Typography variant="h6" sx={cardTitleStyle}>
                             Transaction History
                         </Typography>
                         <TableContainer>
@@ -349,6 +399,7 @@ function CashFlowManagement() {
                                     <TableRow>
                                         <TableCell>Date</TableCell>
                                         <TableCell>Description</TableCell>
+                                        <TableCell>Category</TableCell>
                                         <TableCell align="right">Amount</TableCell>
                                         <TableCell>Type</TableCell>
                                         <TableCell align="right">Balance</TableCell>
@@ -356,49 +407,141 @@ function CashFlowManagement() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {calculateCashFlow().map((transaction) => (
-                                        <TableRow key={transaction.id}>
-                                            <TableCell>{transaction.date}</TableCell>
-                                            <TableCell>{transaction.description}</TableCell>
-                                            <TableCell align="right">{transaction.amount.toFixed(2)}</TableCell>
-                                            <TableCell>{transaction.type}</TableCell>
-                                            <TableCell align="right">{transaction.balance.toFixed(2)}</TableCell>
-                                            <TableCell>
-                                                <IconButton onClick={() => editTransaction(transaction)}>
-                                                    <Edit />
-                                                </IconButton>
-                                                <IconButton onClick={() => openDeleteConfirm(transaction.id)}>
-                                                    <Trash2 />
-                                                </IconButton>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+                                    {calculateCashFlow().map((transaction) => {
+                                        const CategoryIcon = getCategoryIcon(transaction.category);
+                                        const categoryColor = getCategoryColor(transaction.category);
+                                        return (
+                                            <TableRow key={transaction.id}>
+                                                <TableCell>{transaction.date}</TableCell>
+                                                <TableCell>{transaction.description}</TableCell>
+                                                <TableCell>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <CategoryIcon size={20} color={categoryColor} style={{ marginRight: '8px' }} />
+                                                        {transaction.category}
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="right">{transaction.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                                                <TableCell>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
+                                                        {transaction.type === 'income' ? (
+                                                            <TrendingUp size={20} color={CHART_COLORS.income} style={{ marginRight: '4px' }} />
+                                                        ) : (
+                                                            <TrendingDown size={20} color={CHART_COLORS.expense} style={{ marginRight: '4px' }} />
+                                                        )}
+                                                        {transaction.type}
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="right">{transaction.balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                                                <TableCell>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                                                        <IconButton onClick={() => editTransaction(transaction)} size="small" sx={{ mr: 1 }}>
+                                                            <Edit size={18} />
+                                                        </IconButton>
+                                                        <IconButton
+                                                            onClick={() => openDeleteConfirm(transaction.id)}
+                                                            size="small"
+                                                            sx={{
+                                                                backgroundColor: 'rgba(239, 83, 80, 0.1)',
+                                                                '&:hover': {
+                                                                    backgroundColor: 'rgba(239, 83, 80, 0.2)',
+                                                                },
+                                                            }}
+                                                        >
+                                                            <Trash2 size={18} color={CHART_COLORS.expense} />
+                                                        </IconButton>
+                                                    </Box>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
                                 </TableBody>
                             </Table>
                         </TableContainer>
+                    </Paper>
+                </Grid>
+                <Grid item xs={12}>
+                    <Paper sx={cardStyle}>
+                        <Typography variant="h6" sx={cardTitleStyle}>
+                            Cash Flow Analysis
+                        </Typography>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Paper elevation={3} sx={{ p: 2, textAlign: 'center' }}>
+                                    <Typography variant="subtitle1">Total Income</Typography>
+                                    <Typography variant="h5" color={CHART_COLORS.income}>
+                                        {cashFlowData.reduce((sum, t) => t.type === 'income' ? sum + t.amount : sum, 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Paper elevation={3} sx={{ p: 2, textAlign: 'center' }}>
+                                    <Typography variant="subtitle1">Total Expenses</Typography>
+                                    <Typography variant="h5" color={CHART_COLORS.expense}>
+                                        {cashFlowData.reduce((sum, t) => t.type === 'expense' ? sum + t.amount : sum, 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Paper elevation={3} sx={{ p: 2, textAlign: 'center' }}>
+                                    <Typography variant="subtitle1">Net Cash Flow</Typography>
+                                    <Typography variant="h5" color={CHART_COLORS.cashFlow}>
+                                        {(cashFlowData.reduce((sum, t) => t.type === 'income' ? sum + t.amount : sum - t.amount, 0)).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Paper elevation={3} sx={{ p: 2, textAlign: 'center' }}>
+                                    <Typography variant="subtitle1">Cash Flow Ratio</Typography>
+                                    <Typography variant="h5" color={theme.palette.text.primary}>
+                                        {(() => {
+                                            const income = cashFlowData.reduce((sum, t) => t.type === 'income' ? sum + t.amount : sum, 0);
+                                            const expenses = cashFlowData.reduce((sum, t) => t.type === 'expense' ? sum + t.amount : sum, 0);
+                                            return expenses !== 0 ? (income / expenses).toFixed(2) : 'N/A';
+                                        })()}
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                        </Grid>
                     </Paper>
                 </Grid>
             </Grid>
             <Dialog
                 open={deleteConfirmOpen}
                 onClose={closeDeleteConfirm}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
             >
-                <DialogTitle>Confirm Delete</DialogTitle>
+                <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
                 <DialogContent>
-                    <DialogContentText>
-                        Are you sure you want to delete this transaction?
+                    <DialogContentText id="alert-dialog-description">
+                        Are you sure you want to delete this transaction? This action cannot be undone.
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={closeDeleteConfirm}>Cancel</Button>
-                    <Button onClick={deleteTransaction} color="error">Delete</Button>
+                    <Button onClick={closeDeleteConfirm} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={deleteTransaction} color="primary" autoFocus>
+                        Delete
+                    </Button>
                 </DialogActions>
             </Dialog>
             <Snackbar
+                anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                }}
                 open={snackbarOpen}
                 autoHideDuration={6000}
                 onClose={closeSnackbar}
                 message={snackbarMessage}
+                action={
+                    <React.Fragment>
+                        <IconButton size="small" aria-label="close" color="inherit" onClick={closeSnackbar}>
+                            <X />
+                        </IconButton>
+                    </React.Fragment>
+                }
             />
         </Box>
     );
