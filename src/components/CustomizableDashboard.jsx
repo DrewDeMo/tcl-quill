@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Paper, Grid, Box, Button, TextField, MenuItem } from '@mui/material';
+import { Typography, Paper, Grid, Box, Button, TextField, MenuItem, IconButton, Tooltip, useTheme } from '@mui/material';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from 'recharts';
+import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, Legend } from 'recharts';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { Edit, Trash2, PlusCircle, Move } from 'react-feather';
+import { ColorPicker } from 'material-ui-color';
 
 const CHART_TYPES = {
     LINE: 'line',
@@ -12,22 +14,27 @@ const CHART_TYPES = {
     PIE: 'pie',
 };
 
-const CHART_COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+const DEFAULT_COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const DEFAULT_KPIS = [
-    { id: 'income', title: 'Total Income', type: CHART_TYPES.LINE, dataKey: 'Total Income' },
-    { id: 'expense', title: 'Total Expense', type: CHART_TYPES.BAR, dataKey: 'Total Expense' },
-    { id: 'profit', title: 'Net Profit', type: CHART_TYPES.LINE, dataKey: 'Net Income' },
-    { id: 'profitMargin', title: 'Profit Margin', type: CHART_TYPES.PIE, dataKey: 'NP Margin' },
+    { id: 'income', title: 'Total Income', type: CHART_TYPES.LINE, dataKey: 'Total Income', color: DEFAULT_COLORS[0] },
+    { id: 'expense', title: 'Total Expense', type: CHART_TYPES.BAR, dataKey: 'Total Expense', color: DEFAULT_COLORS[1] },
+    { id: 'profit', title: 'Net Profit', type: CHART_TYPES.LINE, dataKey: 'Net Income', color: DEFAULT_COLORS[2] },
+    { id: 'profitMargin', title: 'Profit Margin', type: CHART_TYPES.PIE, dataKey: 'NP Margin', color: DEFAULT_COLORS[3] },
 ];
 
 function CustomizableDashboard() {
+    const theme = useTheme();
     const [user] = useAuthState(auth);
     const [data, setData] = useState([]);
     const [kpis, setKpis] = useState(DEFAULT_KPIS);
-    const [newKpiTitle, setNewKpiTitle] = useState('');
-    const [newKpiType, setNewKpiType] = useState(CHART_TYPES.LINE);
-    const [newKpiDataKey, setNewKpiDataKey] = useState('');
+    const [editingKpi, setEditingKpi] = useState(null);
+    const [newKpi, setNewKpi] = useState({
+        title: '',
+        type: CHART_TYPES.LINE,
+        dataKey: '',
+        color: DEFAULT_COLORS[0],
+    });
 
     useEffect(() => {
         const loadData = async () => {
@@ -64,20 +71,36 @@ function CustomizableDashboard() {
     };
 
     const addNewKpi = () => {
-        if (newKpiTitle && newKpiType && newKpiDataKey) {
-            const newKpi = {
-                id: `kpi-${Date.now()}`,
-                title: newKpiTitle,
-                type: newKpiType,
-                dataKey: newKpiDataKey,
-            };
-            const updatedKpis = [...kpis, newKpi];
+        if (newKpi.title && newKpi.type && newKpi.dataKey) {
+            const updatedKpis = [...kpis, { ...newKpi, id: `kpi-${Date.now()}` }];
             setKpis(updatedKpis);
             updateKpisInFirestore(updatedKpis);
-            setNewKpiTitle('');
-            setNewKpiType(CHART_TYPES.LINE);
-            setNewKpiDataKey('');
+            setNewKpi({
+                title: '',
+                type: CHART_TYPES.LINE,
+                dataKey: '',
+                color: DEFAULT_COLORS[0],
+            });
         }
+    };
+
+    const editKpi = (kpi) => {
+        setEditingKpi(kpi);
+    };
+
+    const updateKpi = () => {
+        if (editingKpi) {
+            const updatedKpis = kpis.map(k => k.id === editingKpi.id ? editingKpi : k);
+            setKpis(updatedKpis);
+            updateKpisInFirestore(updatedKpis);
+            setEditingKpi(null);
+        }
+    };
+
+    const deleteKpi = (kpiId) => {
+        const updatedKpis = kpis.filter(k => k.id !== kpiId);
+        setKpis(updatedKpis);
+        updateKpisInFirestore(updatedKpis);
     };
 
     const renderChart = (kpi) => {
@@ -88,9 +111,9 @@ function CustomizableDashboard() {
                         <LineChart data={data}>
                             <XAxis dataKey="Month" />
                             <YAxis />
-                            <Tooltip />
+                            <RechartsTooltip />
                             <Legend />
-                            <Line type="monotone" dataKey={kpi.dataKey} stroke={CHART_COLORS[0]} />
+                            <Line type="monotone" dataKey={kpi.dataKey} stroke={kpi.color} />
                         </LineChart>
                     </ResponsiveContainer>
                 );
@@ -100,9 +123,9 @@ function CustomizableDashboard() {
                         <BarChart data={data}>
                             <XAxis dataKey="Month" />
                             <YAxis />
-                            <Tooltip />
+                            <RechartsTooltip />
                             <Legend />
-                            <Bar dataKey={kpi.dataKey} fill={CHART_COLORS[1]} />
+                            <Bar dataKey={kpi.dataKey} fill={kpi.color} />
                         </BarChart>
                     </ResponsiveContainer>
                 );
@@ -117,14 +140,14 @@ function CustomizableDashboard() {
                                 cx="50%"
                                 cy="50%"
                                 outerRadius={80}
-                                fill="#8884d8"
+                                fill={kpi.color}
                                 label
                             >
                                 {data.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                                    <Cell key={`cell-${index}`} fill={DEFAULT_COLORS[index % DEFAULT_COLORS.length]} />
                                 ))}
                             </Pie>
-                            <Tooltip />
+                            <RechartsTooltip />
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>
@@ -148,8 +171,8 @@ function CustomizableDashboard() {
                         <TextField
                             fullWidth
                             label="KPI Title"
-                            value={newKpiTitle}
-                            onChange={(e) => setNewKpiTitle(e.target.value)}
+                            value={newKpi.title}
+                            onChange={(e) => setNewKpi({ ...newKpi, title: e.target.value })}
                         />
                     </Grid>
                     <Grid item xs={12} sm={3}>
@@ -157,8 +180,8 @@ function CustomizableDashboard() {
                             fullWidth
                             select
                             label="Chart Type"
-                            value={newKpiType}
-                            onChange={(e) => setNewKpiType(e.target.value)}
+                            value={newKpi.type}
+                            onChange={(e) => setNewKpi({ ...newKpi, type: e.target.value })}
                         >
                             {Object.values(CHART_TYPES).map((type) => (
                                 <MenuItem key={type} value={type}>
@@ -171,13 +194,19 @@ function CustomizableDashboard() {
                         <TextField
                             fullWidth
                             label="Data Key"
-                            value={newKpiDataKey}
-                            onChange={(e) => setNewKpiDataKey(e.target.value)}
+                            value={newKpi.dataKey}
+                            onChange={(e) => setNewKpi({ ...newKpi, dataKey: e.target.value })}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={3}>
-                        <Button variant="contained" onClick={addNewKpi} fullWidth>
-                            Add KPI
+                    <Grid item xs={12} sm={2}>
+                        <ColorPicker
+                            value={newKpi.color}
+                            onChange={(color) => setNewKpi({ ...newKpi, color: color.css.backgroundColor })}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={1}>
+                        <Button variant="contained" onClick={addNewKpi} startIcon={<PlusCircle />}>
+                            Add
                         </Button>
                     </Grid>
                 </Grid>
@@ -189,11 +218,28 @@ function CustomizableDashboard() {
                             {kpis.map((kpi, index) => (
                                 <Draggable key={kpi.id} draggableId={kpi.id} index={index}>
                                     {(provided) => (
-                                        <Grid item xs={12} sm={6} md={4} lg={3} ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                                        <Grid item xs={12} sm={6} md={4} lg={3} ref={provided.innerRef} {...provided.draggableProps}>
                                             <Paper sx={{ p: 2, height: '100%' }}>
-                                                <Typography variant="h6" gutterBottom>
-                                                    {kpi.title}
-                                                </Typography>
+                                                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                                                    <Typography variant="h6">{kpi.title}</Typography>
+                                                    <Box>
+                                                        <Tooltip title="Edit">
+                                                            <IconButton size="small" onClick={() => editKpi(kpi)}>
+                                                                <Edit />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Delete">
+                                                            <IconButton size="small" onClick={() => deleteKpi(kpi.id)}>
+                                                                <Trash2 />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Drag to reorder">
+                                                            <IconButton size="small" {...provided.dragHandleProps}>
+                                                                <Move />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </Box>
+                                                </Box>
                                                 {renderChart(kpi)}
                                             </Paper>
                                         </Grid>
@@ -205,6 +251,57 @@ function CustomizableDashboard() {
                     )}
                 </Droppable>
             </DragDropContext>
+            {editingKpi && (
+                <Paper sx={{ p: 2, mt: 4 }}>
+                    <Typography variant="h6" gutterBottom>
+                        Edit KPI
+                    </Typography>
+                    <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} sm={3}>
+                            <TextField
+                                fullWidth
+                                label="KPI Title"
+                                value={editingKpi.title}
+                                onChange={(e) => setEditingKpi({ ...editingKpi, title: e.target.value })}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={3}>
+                            <TextField
+                                fullWidth
+                                select
+                                label="Chart Type"
+                                value={editingKpi.type}
+                                onChange={(e) => setEditingKpi({ ...editingKpi, type: e.target.value })}
+                            >
+                                {Object.values(CHART_TYPES).map((type) => (
+                                    <MenuItem key={type} value={type}>
+                                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </Grid>
+                        <Grid item xs={12} sm={3}>
+                            <TextField
+                                fullWidth
+                                label="Data Key"
+                                value={editingKpi.dataKey}
+                                onChange={(e) => setEditingKpi({ ...editingKpi, dataKey: e.target.value })}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={2}>
+                            <ColorPicker
+                                value={editingKpi.color}
+                                onChange={(color) => setEditingKpi({ ...editingKpi, color: color.css.backgroundColor })}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={1}>
+                            <Button variant="contained" onClick={updateKpi}>
+                                Update
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </Paper>
+            )}
         </Box>
     );
 }
