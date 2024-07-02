@@ -366,4 +366,9 @@ function CashFlowManagement() {
                         </Grid>
                     </Paper>
                 </Grid>
-            </Grid
+            </Grid>
+        </Box>
+    );
+}
+
+export default
