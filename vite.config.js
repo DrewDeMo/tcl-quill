@@ -9,8 +9,8 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
+      external: ['material-ui-color'],
       output: {
-        external: ['material-ui-color']
         manualChunks(id) {
           if (id.includes('node_modules')) {
             return 'vendor';
