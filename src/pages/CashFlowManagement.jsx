@@ -1,17 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Paper, Grid, CircularProgress, Box, TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useTheme, MenuItem } from '@mui/material';
+import { Typography, Paper, Grid, CircularProgress, Box, TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useTheme, MenuItem, Select } from '@mui/material';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { DollarSign, TrendingUp, TrendingDown } from 'react-feather';
+import { DollarSign, TrendingUp, TrendingDown, AlertCircle } from 'react-feather';
 import dayjs from 'dayjs';
 
 const CHART_COLORS = {
     income: '#66BB6A',
     expense: '#EF5350',
     cashFlow: '#42A5F5',
+    forecast: '#FFA726',
 };
+
+const TRANSACTION_CATEGORIES = [
+    'Salary',
+    'Investments',
+    'Sales',
+    'Rent',
+    'Utilities',
+    'Supplies',
+    'Marketing',
+    'Other Income',
+    'Other Expense',
+];
 
 function CashFlowManagement() {
     const theme = useTheme();
@@ -28,6 +41,7 @@ function CashFlowManagement() {
         category: '',
     });
     const [forecastMonths, setForecastMonths] = useState(6);
+    const [cashFlowForecast, setCashFlowForecast] = useState([]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -53,6 +67,10 @@ function CashFlowManagement() {
 
         loadData();
     }, [user]);
+
+    useEffect(() => {
+        generateCashFlowForecast();
+    }, [cashFlowData, forecastMonths]);
 
     const handleInputChange = (e) => {
         setNewTransaction({ ...newTransaction, [e.target.name]: e.target.value });
@@ -87,30 +105,44 @@ function CashFlowManagement() {
         });
     };
 
-    const generateForecast = () => {
-        const lastMonth = dayjs(cashFlowData[cashFlowData.length - 1]?.date || dayjs());
+    const generateCashFlowForecast = () => {
+        const sortedData = [...cashFlowData].sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
+        const lastDate = sortedData.length > 0 ? dayjs(sortedData[sortedData.length - 1].date) : dayjs();
+
+        const monthlyAverages = TRANSACTION_CATEGORIES.reduce((acc, category) => {
+            const categoryTransactions = sortedData.filter(t => t.category === category);
+            const total = categoryTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            acc[category] = total / Math.max(1, categoryTransactions.length);
+            return acc;
+        }, {});
+
+        let forecastBalance = sortedData.length > 0 ? sortedData[sortedData.length - 1].balance : 0;
         const forecast = [];
-        let balance = cashFlowData[cashFlowData.length - 1]?.balance || 0;
 
         for (let i = 1; i <= forecastMonths; i++) {
-            const forecastMonth = lastMonth.add(i, 'month');
-            const incomeTransactions = cashFlowData.filter(t => t.type === 'income');
-            const expenseTransactions = cashFlowData.filter(t => t.type === 'expense');
+            const forecastDate = lastDate.add(i, 'month');
+            let monthlyIncome = 0;
+            let monthlyExpense = 0;
 
-            const avgIncome = incomeTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0) / incomeTransactions.length;
-            const avgExpense = expenseTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0) / expenseTransactions.length;
+            Object.entries(monthlyAverages).forEach(([category, average]) => {
+                if (['Salary', 'Investments', 'Sales', 'Other Income'].includes(category)) {
+                    monthlyIncome += average;
+                } else {
+                    monthlyExpense += average;
+                }
+            });
 
-            balance += avgIncome - avgExpense;
+            forecastBalance += monthlyIncome - monthlyExpense;
 
             forecast.push({
-                date: forecastMonth.format('YYYY-MM-DD'),
-                income: avgIncome,
-                expense: avgExpense,
-                balance: balance,
+                date: forecastDate.format('YYYY-MM-DD'),
+                income: monthlyIncome,
+                expense: monthlyExpense,
+                balance: forecastBalance,
             });
         }
 
-        return forecast;
+        setCashFlowForecast(forecast);
     };
 
     const cardStyle = {
@@ -188,9 +220,8 @@ function CashFlowManagement() {
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <TextField
+                                <Select
                                     fullWidth
-                                    select
                                     label="Type"
                                     name="type"
                                     value={newTransaction.type}
@@ -198,16 +229,20 @@ function CashFlowManagement() {
                                 >
                                     <MenuItem value="income">Income</MenuItem>
                                     <MenuItem value="expense">Expense</MenuItem>
-                                </TextField>
+                                </Select>
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <TextField
+                                <Select
                                     fullWidth
                                     label="Category"
                                     name="category"
                                     value={newTransaction.category}
                                     onChange={handleInputChange}
-                                />
+                                >
+                                    {TRANSACTION_CATEGORIES.map(category => (
+                                        <MenuItem key={category} value={category}>{category}</MenuItem>
+                                    ))}
+                                </Select>
                             </Grid>
                             <Grid item xs={12}>
                                 <Button variant="contained" color="primary" onClick={addTransaction} startIcon={<DollarSign />}>
@@ -231,15 +266,16 @@ function CashFlowManagement() {
                             sx={{ mb: 2 }}
                         />
                         <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={[...calculateCashFlow(), ...generateForecast()]}>
+                            <LineChart data={[...calculateCashFlow(), ...cashFlowForecast]}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="date" />
                                 <YAxis />
                                 <Tooltip />
                                 <Legend />
-                                <Line type="monotone" dataKey="balance" stroke={CHART_COLORS.cashFlow} />
-                                <Line type="monotone" dataKey="income" stroke={CHART_COLORS.income} />
-                                <Line type="monotone" dataKey="expense" stroke={CHART_COLORS.expense} />
+                                <Line type="monotone" dataKey="balance" stroke={CHART_COLORS.cashFlow} name="Actual Balance" />
+                                <Line type="monotone" dataKey="income" stroke={CHART_COLORS.income} name="Income" />
+                                <Line type="monotone" dataKey="expense" stroke={CHART_COLORS.expense} name="Expense" />
+                                <Line type="monotone" dataKey="balance" stroke={CHART_COLORS.forecast} name="Forecast Balance" strokeDasharray="5 5" />
                             </LineChart>
                         </ResponsiveContainer>
                     </Paper>
@@ -285,9 +321,49 @@ function CashFlowManagement() {
                         </TableContainer>
                     </Paper>
                 </Grid>
-            </Grid>
-        </Box>
-    );
-}
-
-export default CashFlowManagement;
+                <Grid item xs={12}>
+                    <Paper sx={cardStyle}>
+                        <Typography variant="h6" sx={cardTitleStyle}>
+                            Cash Flow Analysis
+                        </Typography>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Paper elevation={3} sx={{ p: 2, textAlign: 'center' }}>
+                                    <Typography variant="subtitle1">Total Income</Typography>
+                                    <Typography variant="h5" color={CHART_COLORS.income}>
+                                        {cashFlowData.reduce((sum, t) => t.type === 'income' ? sum + parseFloat(t.amount) : sum, 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Paper elevation={3} sx={{ p: 2, textAlign: 'center' }}>
+                                    <Typography variant="subtitle1">Total Expenses</Typography>
+                                    <Typography variant="h5" color={CHART_COLORS.expense}>
+                                        {cashFlowData.reduce((sum, t) => t.type === 'expense' ? sum + parseFloat(t.amount) : sum, 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Paper elevation={3} sx={{ p: 2, textAlign: 'center' }}>
+                                    <Typography variant="subtitle1">Net Cash Flow</Typography>
+                                    <Typography variant="h5" color={CHART_COLORS.cashFlow}>
+                                        {(cashFlowData.reduce((sum, t) => t.type === 'income' ? sum + parseFloat(t.amount) : sum - parseFloat(t.amount), 0)).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                            <Grid item xs={12} sm={6} md={3}>
+                                <Paper elevation={3} sx={{ p: 2, textAlign: 'center' }}>
+                                    <Typography variant="subtitle1">Cash Flow Ratio</Typography>
+                                    <Typography variant="h5" color={theme.palette.text.primary}>
+                                        {(() => {
+                                            const income = cashFlowData.reduce((sum, t) => t.type === 'income' ? sum + parseFloat(t.amount) : sum, 0);
+                                            const expenses = cashFlowData.reduce((sum, t) => t.type === 'expense' ? sum + parseFloat(t.amount) : sum, 0);
+                                            return expenses !== 0 ? (income / expenses).toFixed(2) : 'N/A';
+                                        })()}
+                                    </Typography>
+                                </Paper>
+                            </Grid>
+                        </Grid>
+                    </Paper>
+                </Grid>
+            </Grid
