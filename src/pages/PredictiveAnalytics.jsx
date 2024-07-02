@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Typography, Paper, Grid, CircularProgress, Box, TextField, Button, useTheme, Slider, FormControlLabel, Switch } from '@mui/material';
+import { Typography, Paper, Grid, CircularProgress, Box, TextField, useTheme, Slider, FormControlLabel, Switch } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import * as tf from '@tensorflow/tfjs';
-import { TrendingUp, RefreshCw, Sliders } from 'react-feather';
+import { TrendingUp } from 'react-feather';
 import debounce from 'lodash/debounce';
+import dayjs from 'dayjs';
 
 const CHART_COLORS = {
     income: '#66BB6A',
@@ -87,14 +88,16 @@ function PredictiveAnalytics() {
     };
 
     const generatePredictions = useCallback(async (customGrowthRate = growthRate, customInflationRate = inflationRate) => {
-        if (!model) return [];
+        if (!model || data.length === 0) return [];
 
+        const lastMonth = dayjs(data[data.length - 1].Month, 'MMMM YYYY');
         const lastIncome = parseFloat(data[data.length - 1]['Total Income']);
         const lastExpense = parseFloat(data[data.length - 1]['Total Expense']);
 
         const predictedData = [];
 
         for (let i = 1; i <= predictionMonths; i++) {
+            const currentMonth = lastMonth.add(i, 'month');
             const incomeInput = tf.tensor2d([lastIncome * (1 + customGrowthRate / 100) ** i], [1, 1]);
             const expenseInput = tf.tensor2d([lastExpense * (1 + customInflationRate / 100) ** i], [1, 1]);
 
@@ -103,7 +106,7 @@ function PredictiveAnalytics() {
             const predictedProfit = predictedIncome - predictedExpense;
 
             predictedData.push({
-                Month: `Month ${data.length + i}`,
+                Month: currentMonth.format('MMMM YYYY'),
                 'Total Income': predictedIncome,
                 'Total Expense': predictedExpense,
                 'Net Income': predictedProfit,
