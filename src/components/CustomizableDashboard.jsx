@@ -22,17 +22,6 @@ const DEFAULT_KPIS = [
     { id: 'profitMargin', title: 'Profit Margin', type: CHART_TYPES.PIE, dataKey: 'NP Margin', color: DEFAULT_COLORS[3] },
 ];
 
-import React, { useState, useEffect } from 'react';
-import { Typography, Paper, Grid, Box, Button, TextField, MenuItem, IconButton, Tooltip, useTheme, Popover } from '@mui/material';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, Legend } from 'recharts';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '../firebase';
-import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { Edit, Trash2, PlusCircle, Move, Droplet } from 'react-feather';
-
-// ... (rest of the constants remain the same)
-
 function CustomColorPicker({ color, onChange }) {
     const [anchorEl, setAnchorEl] = useState(null);
 
@@ -85,7 +74,6 @@ function CustomColorPicker({ color, onChange }) {
         </>
     );
 }
-
 
 function CustomizableDashboard() {
     const theme = useTheme();
