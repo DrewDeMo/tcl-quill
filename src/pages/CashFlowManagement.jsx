@@ -4,7 +4,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Edit, Trash2, X } from 'react-feather';
+import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Edit, Trash2, X, Briefcase, ShoppingCart, CreditCard, Printer, Monitor, Smartphone, Wifi, FileText, Coffee, Inbox, Send, Users, Award, Zap } from 'react-feather';
 import dayjs from 'dayjs';
 
 const CHART_COLORS = {
@@ -15,15 +15,20 @@ const CHART_COLORS = {
 };
 
 const TRANSACTION_CATEGORIES = [
-    'Salary',
-    'Investments',
-    'Sales',
-    'Rent',
-    'Utilities',
-    'Supplies',
-    'Marketing',
-    'Other Income',
-    'Other Expense',
+    { name: 'Client Payments', icon: Briefcase, type: 'income' },
+    { name: 'Ad Revenue', icon: DollarSign, type: 'income' },
+    { name: 'Affiliate Income', icon: Users, type: 'income' },
+    { name: 'Software Subscriptions', icon: CreditCard, type: 'expense' },
+    { name: 'Print Advertising Costs', icon: Printer, type: 'expense' },
+    { name: 'Digital Advertising Costs', icon: Monitor, type: 'expense' },
+    { name: 'Mobile Advertising Costs', icon: Smartphone, type: 'expense' },
+    { name: 'Internet and Utilities', icon: Wifi, type: 'expense' },
+    { name: 'Office Supplies', icon: ShoppingCart, type: 'expense' },
+    { name: 'Freelancer Payments', icon: Users, type: 'expense' },
+    { name: 'Marketing Tools', icon: Zap, type: 'expense' },
+    { name: 'Professional Development', icon: Award, type: 'expense' },
+    { name: 'Miscellaneous Income', icon: Inbox, type: 'income' },
+    { name: 'Miscellaneous Expense', icon: Send, type: 'expense' },
 ];
 
 function CashFlowManagement() {
@@ -174,9 +179,9 @@ function CashFlowManagement() {
         const lastDate = sortedData.length > 0 ? dayjs(sortedData[sortedData.length - 1].date) : dayjs();
 
         const monthlyAverages = TRANSACTION_CATEGORIES.reduce((acc, category) => {
-            const categoryTransactions = sortedData.filter(t => t.category === category);
+            const categoryTransactions = sortedData.filter(t => t.category === category.name);
             const total = categoryTransactions.reduce((sum, t) => sum + t.amount, 0);
-            acc[category] = total / Math.max(1, categoryTransactions.length);
+            acc[category.name] = total / Math.max(1, categoryTransactions.length);
             return acc;
         }, {});
 
@@ -189,7 +194,8 @@ function CashFlowManagement() {
             let monthlyExpense = 0;
 
             Object.entries(monthlyAverages).forEach(([category, average]) => {
-                if (['Salary', 'Investments', 'Sales', 'Other Income'].includes(category)) {
+                const categoryType = TRANSACTION_CATEGORIES.find(c => c.name === category).type;
+                if (categoryType === 'income') {
                     monthlyIncome += average;
                 } else {
                     monthlyExpense += average;
@@ -221,6 +227,16 @@ function CashFlowManagement() {
         setSnackbarOpen(false);
     };
 
+    const getCategoryIcon = (categoryName) => {
+        const category = TRANSACTION_CATEGORIES.find(cat => cat.name === categoryName);
+        return category ? category.icon : FileText;
+    };
+
+    const getCategoryColor = (categoryName) => {
+        const category = TRANSACTION_CATEGORIES.find(cat => cat.name === categoryName);
+        return category && category.type === 'income' ? CHART_COLORS.income : CHART_COLORS.expense;
+    };
+
     const cardStyle = {
         p: 3,
         height: '100%',
@@ -246,9 +262,7 @@ function CashFlowManagement() {
                 <CircularProgress />
             </Box>
         );
-    }
-
-    return (
+    } return (
         <Box sx={{ p: 4 }} className="fade-in">
             <Typography variant="h4" gutterBottom fontWeight={700} color="text.primary" sx={{ mb: 4 }}>
                 Cash Flow Management
@@ -316,7 +330,7 @@ function CashFlowManagement() {
                                     onChange={handleInputChange}
                                 >
                                     {TRANSACTION_CATEGORIES.map(category => (
-                                        <MenuItem key={category} value={category}>{category}</MenuItem>
+                                        <MenuItem key={category.name} value={category.name}>{category.name}</MenuItem>
                                     ))}
                                 </Select>
                             </Grid>
@@ -386,32 +400,42 @@ function CashFlowManagement() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {calculateCashFlow().map((transaction) => (
-                                        <TableRow key={transaction.id}>
-                                            <TableCell>{transaction.date}</TableCell>
-                                            <TableCell>{transaction.description}</TableCell>
-                                            <TableCell>{transaction.category}</TableCell>
-                                            <TableCell align="right">{transaction.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
-                                            <TableCell>
-                                                {transaction.type === 'income' ? (
-                                                    <TrendingUp color={CHART_COLORS.income} />
-                                                ) : (
-                                                    <TrendingDown color={CHART_COLORS.expense} />
-                                                )}
-                                                {' '}
-                                                {transaction.type}
-                                            </TableCell>
-                                            <TableCell align="right">{transaction.balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
-                                            <TableCell>
-                                                <IconButton onClick={() => editTransaction(transaction)} size="small">
-                                                    <Edit />
-                                                </IconButton>
-                                                <IconButton onClick={() => openDeleteConfirm(transaction.id)} size="small">
-                                                    <Trash2 />
-                                                </IconButton>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+                                    {calculateCashFlow().map((transaction) => {
+                                        const CategoryIcon = getCategoryIcon(transaction.category);
+                                        const categoryColor = getCategoryColor(transaction.category);
+                                        return (
+                                            <TableRow key={transaction.id}>
+                                                <TableCell>{transaction.date}</TableCell>
+                                                <TableCell>{transaction.description}</TableCell>
+                                                <TableCell>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                        <CategoryIcon size={20} color={categoryColor} style={{ marginRight: '8px' }} />
+                                                        {transaction.category}
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="right">{transaction.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                                                <TableCell>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                        {transaction.type === 'income' ? (
+                                                            <TrendingUp size={20} color={CHART_COLORS.income} style={{ marginRight: '4px' }} />
+                                                        ) : (
+                                                            <TrendingDown size={20} color={CHART_COLORS.expense} style={{ marginRight: '4px' }} />
+                                                        )}
+                                                        {transaction.type}
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="right">{transaction.balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                                                <TableCell>
+                                                    <IconButton onClick={() => editTransaction(transaction)} size="small">
+                                                        <Edit size={18} />
+                                                    </IconButton>
+                                                    <IconButton onClick={() => openDeleteConfirm(transaction.id)} size="small">
+                                                        <Trash2 size={18} />
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
                                 </TableBody>
                             </Table>
                         </TableContainer>
