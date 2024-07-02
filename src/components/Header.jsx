@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AppBar, Toolbar, IconButton, Box, Button, useTheme, useMediaQuery } from '@mui/material';
-import { Sun, Moon, User, Home, TrendingUp, Database, BarChart2, Layout } from 'react-feather';
+import { Sun, Moon, User, Home, TrendingUp, Database, BarChart2, Layout, DollarSign } from 'react-feather';
 import { Link } from 'react-router-dom';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '../firebase';
@@ -103,6 +103,15 @@ const Header = ({ darkMode, toggleDarkMode }) => {
                 sx={{ color: textColor, mx: 1 }}
               >
                 Custom Dashboard
+              </Button>
+              <Button
+                color="inherit"
+                component={Link}
+                to="/cash-flow"
+                startIcon={<DollarSign size={18} />}
+                sx={{ color: textColor, mx: 1 }}
+              >
+                Cash Flow
               </Button>
             </>
           )}

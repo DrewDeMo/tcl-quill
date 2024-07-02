@@ -19,6 +19,7 @@ import './App.css'; // Add this line to include custom CSS
 import './styles/animations.css';
 import PredictiveAnalytics from './pages/PredictiveAnalytics.jsx';
 import CustomizableDashboard from './components/CustomizableDashboard.jsx';
+import CashFlowManagement from './pages/CashFlowManagement.jsx';
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -47,6 +48,7 @@ function App() {
                 <Route path="/projections" element={user ? <FinancialProjections /> : <Navigate to="/signin" />} />
                 <Route path="/data" element={user ? <DataManagement /> : <Navigate to="/signin" />} />
                 <Route path="/predictive" element={user ? <PredictiveAnalytics /> : <Navigate to="/signin" />} />
+                <Route path="/cash-flow" element={user ? <CashFlowManagement /> : <Navigate to="/signin" />} />
                 <Route path="/custom-dashboard" element={user ? <CustomizableDashboard /> : <Navigate to="/signin" />} />
                 <Route path="/profile" element={user ? <UserProfile /> : <Navigate to="/signin" />} />
                 <Route path="/signup" element={!user ? <SignUp /> : <Navigate to="/" />} />
