@@ -371,4 +371,4 @@ function CashFlowManagement() {
     );
 }
 
-export default
+export default CashFlowManagement;
