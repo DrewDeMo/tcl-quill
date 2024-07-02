@@ -17,6 +17,8 @@ import UserProfile from './components/UserProfile.jsx';
 import { lightTheme, darkTheme } from './theme.js';
 import './App.css'; // Add this line to include custom CSS
 import './styles/animations.css';
+import PredictiveAnalytics from './pages/PredictiveAnalytics.jsx';
+import CustomizableDashboard from './components/CustomizableDashboard.jsx';
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -44,6 +46,8 @@ function App() {
                 <Route path="/" element={user ? <Dashboard /> : <Navigate to="/signin" />} />
                 <Route path="/projections" element={user ? <FinancialProjections /> : <Navigate to="/signin" />} />
                 <Route path="/data" element={user ? <DataManagement /> : <Navigate to="/signin" />} />
+                <Route path="/predictive" element={user ? <PredictiveAnalytics /> : <Navigate to="/signin" />} />
+                <Route path="/custom-dashboard" element={user ? <CustomizableDashboard /> : <Navigate to="/signin" />} />
                 <Route path="/profile" element={user ? <UserProfile /> : <Navigate to="/signin" />} />
                 <Route path="/signup" element={!user ? <SignUp /> : <Navigate to="/" />} />
                 <Route path="/signin" element={!user ? <SignIn /> : <Navigate to="/" />} />
