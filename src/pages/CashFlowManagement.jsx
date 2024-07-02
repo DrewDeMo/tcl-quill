@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Paper, Grid, CircularProgress, Box, TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useTheme } from '@mui/material';
+import { Typography, Paper, Grid, CircularProgress, Box, TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useTheme, MenuItem } from '@mui/material';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
@@ -25,7 +25,9 @@ function CashFlowManagement() {
         description: '',
         amount: '',
         type: 'income',
+        category: '',
     });
+    const [forecastMonths, setForecastMonths] = useState(6);
 
     useEffect(() => {
         const loadData = async () => {
@@ -57,7 +59,7 @@ function CashFlowManagement() {
     };
 
     const addTransaction = async () => {
-        if (newTransaction.description && newTransaction.amount) {
+        if (newTransaction.description && newTransaction.amount && newTransaction.category) {
             const updatedCashFlowData = [...cashFlowData, newTransaction];
             setCashFlowData(updatedCashFlowData);
 
@@ -72,6 +74,7 @@ function CashFlowManagement() {
                 description: '',
                 amount: '',
                 type: 'income',
+                category: '',
             });
         }
     };
@@ -82,6 +85,32 @@ function CashFlowManagement() {
             balance += transaction.type === 'income' ? parseFloat(transaction.amount) : -parseFloat(transaction.amount);
             return { ...transaction, balance };
         });
+    };
+
+    const generateForecast = () => {
+        const lastMonth = dayjs(cashFlowData[cashFlowData.length - 1]?.date || dayjs());
+        const forecast = [];
+        let balance = cashFlowData[cashFlowData.length - 1]?.balance || 0;
+
+        for (let i = 1; i <= forecastMonths; i++) {
+            const forecastMonth = lastMonth.add(i, 'month');
+            const incomeTransactions = cashFlowData.filter(t => t.type === 'income');
+            const expenseTransactions = cashFlowData.filter(t => t.type === 'expense');
+
+            const avgIncome = incomeTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0) / incomeTransactions.length;
+            const avgExpense = expenseTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0) / expenseTransactions.length;
+
+            balance += avgIncome - avgExpense;
+
+            forecast.push({
+                date: forecastMonth.format('YYYY-MM-DD'),
+                income: avgIncome,
+                expense: avgExpense,
+                balance: balance,
+            });
+        }
+
+        return forecast;
     };
 
     const cardStyle = {
@@ -167,9 +196,18 @@ function CashFlowManagement() {
                                     value={newTransaction.type}
                                     onChange={handleInputChange}
                                 >
-                                    <option value="income">Income</option>
-                                    <option value="expense">Expense</option>
+                                    <MenuItem value="income">Income</MenuItem>
+                                    <MenuItem value="expense">Expense</MenuItem>
                                 </TextField>
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="Category"
+                                    name="category"
+                                    value={newTransaction.category}
+                                    onChange={handleInputChange}
+                                />
                             </Grid>
                             <Grid item xs={12}>
                                 <Button variant="contained" color="primary" onClick={addTransaction} startIcon={<DollarSign />}>
@@ -184,14 +222,24 @@ function CashFlowManagement() {
                         <Typography variant="h6" sx={cardTitleStyle}>
                             Cash Flow Forecast
                         </Typography>
+                        <TextField
+                            fullWidth
+                            label="Forecast Months"
+                            type="number"
+                            value={forecastMonths}
+                            onChange={(e) => setForecastMonths(parseInt(e.target.value))}
+                            sx={{ mb: 2 }}
+                        />
                         <ResponsiveContainer width="100%" height={300}>
-                            <LineChart data={calculateCashFlow()}>
+                            <LineChart data={[...calculateCashFlow(), ...generateForecast()]}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="date" />
                                 <YAxis />
                                 <Tooltip />
                                 <Legend />
                                 <Line type="monotone" dataKey="balance" stroke={CHART_COLORS.cashFlow} />
+                                <Line type="monotone" dataKey="income" stroke={CHART_COLORS.income} />
+                                <Line type="monotone" dataKey="expense" stroke={CHART_COLORS.expense} />
                             </LineChart>
                         </ResponsiveContainer>
                     </Paper>
@@ -207,6 +255,7 @@ function CashFlowManagement() {
                                     <TableRow>
                                         <TableCell>Date</TableCell>
                                         <TableCell>Description</TableCell>
+                                        <TableCell>Category</TableCell>
                                         <TableCell align="right">Amount</TableCell>
                                         <TableCell>Type</TableCell>
                                         <TableCell align="right">Balance</TableCell>
@@ -217,6 +266,7 @@ function CashFlowManagement() {
                                         <TableRow key={index}>
                                             <TableCell>{transaction.date}</TableCell>
                                             <TableCell>{transaction.description}</TableCell>
+                                            <TableCell>{transaction.category}</TableCell>
                                             <TableCell align="right">{parseFloat(transaction.amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                                             <TableCell>
                                                 {transaction.type === 'income' ? (
