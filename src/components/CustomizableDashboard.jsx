@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Paper, Grid, Box, Button, TextField, MenuItem, IconButton, Tooltip, useTheme } from '@mui/material';
+import { Typography, Paper, Grid, Box, Button, TextField, MenuItem, IconButton, Tooltip, useTheme, Popover } from '@mui/material';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip, Legend } from 'recharts';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { Edit, Trash2, PlusCircle, Move } from 'react-feather';
-import { ColorPicker } from 'material-ui-color';
+import { Edit, Trash2, PlusCircle, Move, Palette } from 'react-feather';
 
 const CHART_TYPES = {
     LINE: 'line',
@@ -22,6 +21,59 @@ const DEFAULT_KPIS = [
     { id: 'profit', title: 'Net Profit', type: CHART_TYPES.LINE, dataKey: 'Net Income', color: DEFAULT_COLORS[2] },
     { id: 'profitMargin', title: 'Profit Margin', type: CHART_TYPES.PIE, dataKey: 'NP Margin', color: DEFAULT_COLORS[3] },
 ];
+
+function CustomColorPicker({ color, onChange }) {
+    const [anchorEl, setAnchorEl] = useState(null);
+
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleColorChange = (newColor) => {
+        onChange(newColor);
+        handleClose();
+    };
+
+    const open = Boolean(anchorEl);
+
+    return (
+        <>
+            <IconButton onClick={handleClick} style={{ color: color }}>
+                <Palette />
+            </IconButton>
+            <Popover
+                open={open}
+                anchorEl={anchorEl}
+                onClose={handleClose}
+                anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'center',
+                }}
+                transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'center',
+                }}
+            >
+                <Box p={2}>
+                    <Grid container spacing={1}>
+                        {DEFAULT_COLORS.map((c) => (
+                            <Grid item key={c}>
+                                <IconButton
+                                    style={{ backgroundColor: c, width: 32, height: 32 }}
+                                    onClick={() => handleColorChange(c)}
+                                />
+                            </Grid>
+                        ))}
+                    </Grid>
+                </Box>
+            </Popover>
+        </>
+    );
+}
 
 function CustomizableDashboard() {
     const theme = useTheme();
@@ -199,9 +251,9 @@ function CustomizableDashboard() {
                         />
                     </Grid>
                     <Grid item xs={12} sm={2}>
-                        <ColorPicker
-                            value={newKpi.color}
-                            onChange={(color) => setNewKpi({ ...newKpi, color: color.css.backgroundColor })}
+                        <CustomColorPicker
+                            color={newKpi.color}
+                            onChange={(color) => setNewKpi({ ...newKpi, color })}
                         />
                     </Grid>
                     <Grid item xs={12} sm={1}>
@@ -289,9 +341,9 @@ function CustomizableDashboard() {
                             />
                         </Grid>
                         <Grid item xs={12} sm={2}>
-                            <ColorPicker
-                                value={editingKpi.color}
-                                onChange={(color) => setEditingKpi({ ...editingKpi, color: color.css.backgroundColor })}
+                            <CustomColorPicker
+                                color={editingKpi.color}
+                                onChange={(color) => setEditingKpi({ ...editingKpi, color })}
                             />
                         </Grid>
                         <Grid item xs={12} sm={1}>
