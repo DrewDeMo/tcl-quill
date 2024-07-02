@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Paper, Grid, CircularProgress, Box, TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useTheme, MenuItem, Select, IconButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar } from '@mui/material';
+import { Typography, Paper, Grid, CircularProgress, Box, TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useTheme, MenuItem, Select, IconButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar, InputLabel, FormControl } from '@mui/material';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
@@ -262,7 +262,8 @@ function CashFlowManagement() {
                 <CircularProgress />
             </Box>
         );
-    } return (
+    }
+    return (
         <Box sx={{ p: 4 }} className="fade-in">
             <Typography variant="h4" gutterBottom fontWeight={700} color="text.primary" sx={{ mb: 4 }}>
                 Cash Flow Management
@@ -310,29 +311,35 @@ function CashFlowManagement() {
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <Select
-                                    fullWidth
-                                    label="Type"
-                                    name="type"
-                                    value={editingTransaction ? editingTransaction.type : newTransaction.type}
-                                    onChange={handleInputChange}
-                                >
-                                    <MenuItem value="income">Income</MenuItem>
-                                    <MenuItem value="expense">Expense</MenuItem>
-                                </Select>
+                                <FormControl fullWidth>
+                                    <InputLabel id="transaction-type-label">Type</InputLabel>
+                                    <Select
+                                        labelId="transaction-type-label"
+                                        label="Type"
+                                        name="type"
+                                        value={editingTransaction ? editingTransaction.type : newTransaction.type}
+                                        onChange={handleInputChange}
+                                    >
+                                        <MenuItem value="income">Income</MenuItem>
+                                        <MenuItem value="expense">Expense</MenuItem>
+                                    </Select>
+                                </FormControl>
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <Select
-                                    fullWidth
-                                    label="Category"
-                                    name="category"
-                                    value={editingTransaction ? editingTransaction.category : newTransaction.category}
-                                    onChange={handleInputChange}
-                                >
-                                    {TRANSACTION_CATEGORIES.map(category => (
-                                        <MenuItem key={category.name} value={category.name}>{category.name}</MenuItem>
-                                    ))}
-                                </Select>
+                                <FormControl fullWidth>
+                                    <InputLabel id="transaction-category-label">Category</InputLabel>
+                                    <Select
+                                        labelId="transaction-category-label"
+                                        label="Category"
+                                        name="category"
+                                        value={editingTransaction ? editingTransaction.category : newTransaction.category}
+                                        onChange={handleInputChange}
+                                    >
+                                        {TRANSACTION_CATEGORIES.map(category => (
+                                            <MenuItem key={category.name} value={category.name}>{category.name}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
                             </Grid>
                             <Grid item xs={12}>
                                 {editingTransaction ? (
@@ -415,7 +422,7 @@ function CashFlowManagement() {
                                                 </TableCell>
                                                 <TableCell align="right">{transaction.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                                                 <TableCell>
-                                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
                                                         {transaction.type === 'income' ? (
                                                             <TrendingUp size={20} color={CHART_COLORS.income} style={{ marginRight: '4px' }} />
                                                         ) : (
@@ -426,12 +433,23 @@ function CashFlowManagement() {
                                                 </TableCell>
                                                 <TableCell align="right">{transaction.balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                                                 <TableCell>
-                                                    <IconButton onClick={() => editTransaction(transaction)} size="small">
-                                                        <Edit size={18} />
-                                                    </IconButton>
-                                                    <IconButton onClick={() => openDeleteConfirm(transaction.id)} size="small">
-                                                        <Trash2 size={18} />
-                                                    </IconButton>
+                                                    <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                                                        <IconButton onClick={() => editTransaction(transaction)} size="small" sx={{ mr: 1 }}>
+                                                            <Edit size={18} />
+                                                        </IconButton>
+                                                        <IconButton
+                                                            onClick={() => openDeleteConfirm(transaction.id)}
+                                                            size="small"
+                                                            sx={{
+                                                                backgroundColor: 'rgba(239, 83, 80, 0.1)',
+                                                                '&:hover': {
+                                                                    backgroundColor: 'rgba(239, 83, 80, 0.2)',
+                                                                },
+                                                            }}
+                                                        >
+                                                            <Trash2 size={18} color={CHART_COLORS.expense} />
+                                                        </IconButton>
+                                                    </Box>
                                                 </TableCell>
                                             </TableRow>
                                         );
