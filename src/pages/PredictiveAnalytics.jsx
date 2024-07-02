@@ -26,6 +26,7 @@ function PredictiveAnalytics() {
         scenario1: [],
         scenario2: [],
     });
+    const [chartData, setChartData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [predictionMonths, setPredictionMonths] = useState(12);
@@ -90,30 +91,20 @@ function PredictiveAnalytics() {
     const generatePredictions = useCallback(async (customGrowthRate = growthRate, customInflationRate = inflationRate) => {
         if (!model || data.length === 0) return [];
 
-        const lastMonth = dayjs(data[data.length - 1].Month, 'MMMM YYYY');
-        const lastIncome = parseFloat(data[data.length - 1]['Total Income']);
-        const lastExpense = parseFloat(data[data.length - 1]['Total Expense']);
-
-        const predictedData = [];
+        const lastMonth = data[data.length - 1];
+        const projectedData = [];
 
         for (let i = 1; i <= predictionMonths; i++) {
-            const currentMonth = lastMonth.add(i, 'month');
-            const incomeInput = tf.tensor2d([lastIncome * (1 + customGrowthRate / 100) ** i], [1, 1]);
-            const expenseInput = tf.tensor2d([lastExpense * (1 + customInflationRate / 100) ** i], [1, 1]);
-
-            const predictedIncome = model.income.predict(incomeInput).dataSync()[0];
-            const predictedExpense = model.expense.predict(expenseInput).dataSync()[0];
-            const predictedProfit = predictedIncome - predictedExpense;
-
-            predictedData.push({
-                Month: currentMonth.format('MMMM YYYY'),
-                'Total Income': predictedIncome,
-                'Total Expense': predictedExpense,
-                'Net Income': predictedProfit,
-            });
+            const projectedMonth = {
+                Month: dayjs(lastMonth.Month, 'MMMM YYYY').add(i, 'month').format('MMMM YYYY'),
+                'Total Income': (parseFloat(lastMonth['Total Income']) * (1 + customGrowthRate / 100) ** i).toFixed(2),
+                'Total Expense': (parseFloat(lastMonth['Total Expense']) * (1 + customInflationRate / 100) ** i).toFixed(2),
+            };
+            projectedMonth['Net Income'] = (parseFloat(projectedMonth['Total Income']) - parseFloat(projectedMonth['Total Expense'])).toFixed(2);
+            projectedData.push(projectedMonth);
         }
 
-        return predictedData;
+        return projectedData;
     }, [model, data, predictionMonths, growthRate, inflationRate]);
 
     const updatePredictions = useCallback(debounce(async () => {
@@ -136,6 +127,13 @@ function PredictiveAnalytics() {
     useEffect(() => {
         updatePredictions();
     }, [growthRate, inflationRate, predictionMonths, showScenarios, scenario1, scenario2, updatePredictions]);
+
+    useEffect(() => {
+        const historicalDataCount = Math.max(0, data.length - predictionMonths);
+        const relevantHistoricalData = data.slice(historicalDataCount);
+        const combinedData = [...relevantHistoricalData, ...predictions.baseScenario];
+        setChartData(combinedData);
+    }, [data, predictions, predictionMonths]);
 
     const handlePredictionMonthsChange = (event) => {
         setPredictionMonths(parseInt(event.target.value));
@@ -284,7 +282,7 @@ function PredictiveAnalytics() {
                             Financial Predictions
                         </Typography>
                         <ResponsiveContainer width="100%" height={400}>
-                            <LineChart data={[...data, ...predictions.baseScenario]}>
+                            <LineChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="Month" />
                                 <YAxis />
@@ -294,10 +292,10 @@ function PredictiveAnalytics() {
                                 <Line type="monotone" dataKey="Total Expense" stroke={CHART_COLORS.expense} />
                                 <Line type="monotone" dataKey="Net Income" stroke={CHART_COLORS.profit} />
                                 {showScenarios && predictions.scenario1.length > 0 && (
-                                    <Line type="monotone" dataKey="Net Income" data={[...data, ...predictions.scenario1]} stroke={CHART_COLORS.scenario1} name="Scenario 1" />
+                                    <Line type="monotone" dataKey="Net Income" data={[...data.slice(-predictionMonths), ...predictions.scenario1]} stroke={CHART_COLORS.scenario1} name="Scenario 1" />
                                 )}
                                 {showScenarios && predictions.scenario2.length > 0 && (
-                                    <Line type="monotone" dataKey="Net Income" data={[...data, ...predictions.scenario2]} stroke={CHART_COLORS.scenario2} name="Scenario 2" />
+                                    <Line type="monotone" dataKey="Net Income" data={[...data.slice(-predictionMonths), ...predictions.scenario2]} stroke={CHART_COLORS.scenario2} name="Scenario 2" />
                                 )}
                             </LineChart>
                         </ResponsiveContainer>
