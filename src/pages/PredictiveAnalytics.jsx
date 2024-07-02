@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Typography, Paper, Grid, CircularProgress, Box, TextField, Button, useTheme, Slider, FormControlLabel, Switch } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -6,6 +6,7 @@ import { auth, db } from '../firebase';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import * as tf from '@tensorflow/tfjs';
 import { TrendingUp, RefreshCw, Sliders } from 'react-feather';
+import debounce from 'lodash/debounce';
 
 const CHART_COLORS = {
     income: '#66BB6A',
@@ -19,7 +20,11 @@ function PredictiveAnalytics() {
     const theme = useTheme();
     const [user] = useAuthState(auth);
     const [data, setData] = useState([]);
-    const [predictions, setPredictions] = useState([]);
+    const [predictions, setPredictions] = useState({
+        baseScenario: [],
+        scenario1: [],
+        scenario2: [],
+    });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [predictionMonths, setPredictionMonths] = useState(12);
@@ -81,8 +86,8 @@ function PredictiveAnalytics() {
         setModel({ income: incomeModel, expense: expenseModel });
     };
 
-    const generatePredictions = async (customGrowthRate = growthRate, customInflationRate = inflationRate) => {
-        if (!model) return;
+    const generatePredictions = useCallback(async (customGrowthRate = growthRate, customInflationRate = inflationRate) => {
+        if (!model) return [];
 
         const lastIncome = parseFloat(data[data.length - 1]['Total Income']);
         const lastExpense = parseFloat(data[data.length - 1]['Total Expense']);
@@ -106,9 +111,9 @@ function PredictiveAnalytics() {
         }
 
         return predictedData;
-    };
+    }, [model, data, predictionMonths, growthRate, inflationRate]);
 
-    const handleGeneratePredictions = async () => {
+    const updatePredictions = useCallback(debounce(async () => {
         const baseScenario = await generatePredictions();
         let scenario1Data = [];
         let scenario2Data = [];
@@ -123,7 +128,11 @@ function PredictiveAnalytics() {
             scenario1: scenario1Data,
             scenario2: scenario2Data,
         });
-    };
+    }, 300), [generatePredictions, showScenarios, scenario1, scenario2]);
+
+    useEffect(() => {
+        updatePredictions();
+    }, [growthRate, inflationRate, predictionMonths, showScenarios, scenario1, scenario2, updatePredictions]);
 
     const handlePredictionMonthsChange = (event) => {
         setPredictionMonths(parseInt(event.target.value));
@@ -210,11 +219,6 @@ function PredictiveAnalytics() {
                             max={10}
                         />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                        <Button variant="contained" color="primary" onClick={handleGeneratePredictions} startIcon={<RefreshCw />} fullWidth>
-                            Generate Predictions
-                        </Button>
-                    </Grid>
                 </Grid>
                 <Box sx={{ mt: 2 }}>
                     <FormControlLabel
@@ -277,7 +281,7 @@ function PredictiveAnalytics() {
                             Financial Predictions
                         </Typography>
                         <ResponsiveContainer width="100%" height={400}>
-                            <LineChart data={[...data, ...(predictions.baseScenario || [])]}>
+                            <LineChart data={[...data, ...predictions.baseScenario]}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="Month" />
                                 <YAxis />
@@ -286,10 +290,10 @@ function PredictiveAnalytics() {
                                 <Line type="monotone" dataKey="Total Income" stroke={CHART_COLORS.income} />
                                 <Line type="monotone" dataKey="Total Expense" stroke={CHART_COLORS.expense} />
                                 <Line type="monotone" dataKey="Net Income" stroke={CHART_COLORS.profit} />
-                                {showScenarios && predictions.scenario1 && (
+                                {showScenarios && predictions.scenario1.length > 0 && (
                                     <Line type="monotone" dataKey="Net Income" data={[...data, ...predictions.scenario1]} stroke={CHART_COLORS.scenario1} name="Scenario 1" />
                                 )}
-                                {showScenarios && predictions.scenario2 && (
+                                {showScenarios && predictions.scenario2.length > 0 && (
                                     <Line type="monotone" dataKey="Net Income" data={[...data, ...predictions.scenario2]} stroke={CHART_COLORS.scenario2} name="Scenario 2" />
                                 )}
                             </LineChart>
