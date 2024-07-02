@@ -98,20 +98,20 @@ const Header = ({ darkMode, toggleDarkMode }) => {
               <Button
                 color="inherit"
                 component={Link}
-                to="/custom-dashboard"
-                startIcon={<Layout size={18} />}
-                sx={{ color: textColor, mx: 1 }}
-              >
-                Custom Dashboard
-              </Button>
-              <Button
-                color="inherit"
-                component={Link}
                 to="/cash-flow"
                 startIcon={<DollarSign size={18} />}
                 sx={{ color: textColor, mx: 1 }}
               >
                 Cash Flow
+              </Button>
+              <Button
+                color="inherit"
+                component={Link}
+                to="/custom-dashboard"
+                startIcon={<Layout size={18} />}
+                sx={{ color: textColor, mx: 1 }}
+              >
+                Custom Dash
               </Button>
             </>
           )}
