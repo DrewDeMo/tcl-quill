@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Paper, Grid, CircularProgress, Box, TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useTheme, MenuItem, Select } from '@mui/material';
+import { Typography, Paper, Grid, CircularProgress, Box, TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useTheme, MenuItem, Select, IconButton, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar } from '@mui/material';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
-import { DollarSign, TrendingUp, TrendingDown, AlertCircle } from 'react-feather';
+import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Edit, Trash2, X } from 'react-feather';
 import dayjs from 'dayjs';
 
 const CHART_COLORS = {
@@ -40,8 +40,13 @@ function CashFlowManagement() {
         type: 'income',
         category: '',
     });
+    const [editingTransaction, setEditingTransaction] = useState(null);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deleteTransactionId, setDeleteTransactionId] = useState(null);
     const [forecastMonths, setForecastMonths] = useState(6);
     const [cashFlowForecast, setCashFlowForecast] = useState([]);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
 
     useEffect(() => {
         const loadData = async () => {
@@ -73,12 +78,22 @@ function CashFlowManagement() {
     }, [cashFlowData, forecastMonths]);
 
     const handleInputChange = (e) => {
-        setNewTransaction({ ...newTransaction, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        if (editingTransaction) {
+            setEditingTransaction({ ...editingTransaction, [name]: value });
+        } else {
+            setNewTransaction({ ...newTransaction, [name]: value });
+        }
     };
 
     const addTransaction = async () => {
         if (newTransaction.description && newTransaction.amount && newTransaction.category) {
-            const updatedCashFlowData = [...cashFlowData, newTransaction];
+            const transactionToAdd = {
+                ...newTransaction,
+                id: Date.now().toString(),
+                amount: parseFloat(newTransaction.amount)
+            };
+            const updatedCashFlowData = [...cashFlowData, transactionToAdd];
             setCashFlowData(updatedCashFlowData);
 
             // Update Firestore
@@ -94,13 +109,62 @@ function CashFlowManagement() {
                 type: 'income',
                 category: '',
             });
+            showSnackbar('Transaction added successfully');
+        }
+    };
+
+    const editTransaction = (transaction) => {
+        setEditingTransaction(transaction);
+    };
+
+    const updateTransaction = async () => {
+        if (editingTransaction) {
+            const updatedCashFlowData = cashFlowData.map(t =>
+                t.id === editingTransaction.id ? { ...editingTransaction, amount: parseFloat(editingTransaction.amount) } : t
+            );
+            setCashFlowData(updatedCashFlowData);
+
+            // Update Firestore
+            if (user) {
+                const userDocRef = doc(collection(db, 'users'), user.uid);
+                await updateDoc(userDocRef, { cashFlowData: updatedCashFlowData });
+            }
+
+            setEditingTransaction(null);
+            showSnackbar('Transaction updated successfully');
+        }
+    };
+
+    const openDeleteConfirm = (id) => {
+        setDeleteTransactionId(id);
+        setDeleteConfirmOpen(true);
+    };
+
+    const closeDeleteConfirm = () => {
+        setDeleteTransactionId(null);
+        setDeleteConfirmOpen(false);
+    };
+
+    const deleteTransaction = async () => {
+        if (deleteTransactionId) {
+            const updatedCashFlowData = cashFlowData.filter(t => t.id !== deleteTransactionId);
+            setCashFlowData(updatedCashFlowData);
+
+            // Update Firestore
+            if (user) {
+                const userDocRef = doc(collection(db, 'users'), user.uid);
+                await updateDoc(userDocRef, { cashFlowData: updatedCashFlowData });
+            }
+
+            closeDeleteConfirm();
+            showSnackbar('Transaction deleted successfully');
         }
     };
 
     const calculateCashFlow = () => {
         let balance = 0;
         return cashFlowData.map(transaction => {
-            balance += transaction.type === 'income' ? parseFloat(transaction.amount) : -parseFloat(transaction.amount);
+            balance += transaction.type === 'income' ? transaction.amount : -transaction.amount;
             return { ...transaction, balance };
         });
     };
@@ -111,7 +175,7 @@ function CashFlowManagement() {
 
         const monthlyAverages = TRANSACTION_CATEGORIES.reduce((acc, category) => {
             const categoryTransactions = sortedData.filter(t => t.category === category);
-            const total = categoryTransactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+            const total = categoryTransactions.reduce((sum, t) => sum + t.amount, 0);
             acc[category] = total / Math.max(1, categoryTransactions.length);
             return acc;
         }, {});
@@ -143,6 +207,18 @@ function CashFlowManagement() {
         }
 
         setCashFlowForecast(forecast);
+    };
+
+    const showSnackbar = (message) => {
+        setSnackbarMessage(message);
+        setSnackbarOpen(true);
+    };
+
+    const closeSnackbar = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setSnackbarOpen(false);
     };
 
     const cardStyle = {
@@ -186,7 +262,7 @@ function CashFlowManagement() {
                 <Grid item xs={12} md={6}>
                     <Paper sx={cardStyle}>
                         <Typography variant="h6" sx={cardTitleStyle}>
-                            Add Transaction
+                            {editingTransaction ? 'Edit Transaction' : 'Add Transaction'}
                         </Typography>
                         <Grid container spacing={2}>
                             <Grid item xs={12} sm={6}>
@@ -195,7 +271,7 @@ function CashFlowManagement() {
                                     label="Date"
                                     type="date"
                                     name="date"
-                                    value={newTransaction.date}
+                                    value={editingTransaction ? editingTransaction.date : newTransaction.date}
                                     onChange={handleInputChange}
                                     InputLabelProps={{ shrink: true }}
                                 />
@@ -205,7 +281,7 @@ function CashFlowManagement() {
                                     fullWidth
                                     label="Description"
                                     name="description"
-                                    value={newTransaction.description}
+                                    value={editingTransaction ? editingTransaction.description : newTransaction.description}
                                     onChange={handleInputChange}
                                 />
                             </Grid>
@@ -215,7 +291,7 @@ function CashFlowManagement() {
                                     label="Amount"
                                     type="number"
                                     name="amount"
-                                    value={newTransaction.amount}
+                                    value={editingTransaction ? editingTransaction.amount : newTransaction.amount}
                                     onChange={handleInputChange}
                                 />
                             </Grid>
@@ -224,7 +300,7 @@ function CashFlowManagement() {
                                     fullWidth
                                     label="Type"
                                     name="type"
-                                    value={newTransaction.type}
+                                    value={editingTransaction ? editingTransaction.type : newTransaction.type}
                                     onChange={handleInputChange}
                                 >
                                     <MenuItem value="income">Income</MenuItem>
@@ -236,7 +312,7 @@ function CashFlowManagement() {
                                     fullWidth
                                     label="Category"
                                     name="category"
-                                    value={newTransaction.category}
+                                    value={editingTransaction ? editingTransaction.category : newTransaction.category}
                                     onChange={handleInputChange}
                                 >
                                     {TRANSACTION_CATEGORIES.map(category => (
@@ -245,9 +321,20 @@ function CashFlowManagement() {
                                 </Select>
                             </Grid>
                             <Grid item xs={12}>
-                                <Button variant="contained" color="primary" onClick={addTransaction} startIcon={<DollarSign />}>
-                                    Add Transaction
-                                </Button>
+                                {editingTransaction ? (
+                                    <>
+                                        <Button variant="contained" color="primary" onClick={updateTransaction} startIcon={<Edit />}>
+                                            Update Transaction
+                                        </Button>
+                                        <Button variant="outlined" color="secondary" onClick={() => setEditingTransaction(null)} startIcon={<X />} sx={{ ml: 2 }}>
+                                            Cancel
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button variant="contained" color="primary" onClick={addTransaction} startIcon={<DollarSign />}>
+                                        Add Transaction
+                                    </Button>
+                                )}
                             </Grid>
                         </Grid>
                     </Paper>
@@ -295,15 +382,16 @@ function CashFlowManagement() {
                                         <TableCell align="right">Amount</TableCell>
                                         <TableCell>Type</TableCell>
                                         <TableCell align="right">Balance</TableCell>
+                                        <TableCell>Actions</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {calculateCashFlow().map((transaction, index) => (
-                                        <TableRow key={index}>
+                                    {calculateCashFlow().map((transaction) => (
+                                        <TableRow key={transaction.id}>
                                             <TableCell>{transaction.date}</TableCell>
                                             <TableCell>{transaction.description}</TableCell>
                                             <TableCell>{transaction.category}</TableCell>
-                                            <TableCell align="right">{parseFloat(transaction.amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                                            <TableCell align="right">{transaction.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
                                             <TableCell>
                                                 {transaction.type === 'income' ? (
                                                     <TrendingUp color={CHART_COLORS.income} />
@@ -314,6 +402,14 @@ function CashFlowManagement() {
                                                 {transaction.type}
                                             </TableCell>
                                             <TableCell align="right">{transaction.balance.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</TableCell>
+                                            <TableCell>
+                                                <IconButton onClick={() => editTransaction(transaction)} size="small">
+                                                    <Edit />
+                                                </IconButton>
+                                                <IconButton onClick={() => openDeleteConfirm(transaction.id)} size="small">
+                                                    <Trash2 />
+                                                </IconButton>
+                                            </TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -331,7 +427,7 @@ function CashFlowManagement() {
                                 <Paper elevation={3} sx={{ p: 2, textAlign: 'center' }}>
                                     <Typography variant="subtitle1">Total Income</Typography>
                                     <Typography variant="h5" color={CHART_COLORS.income}>
-                                        {cashFlowData.reduce((sum, t) => t.type === 'income' ? sum + parseFloat(t.amount) : sum, 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                        {cashFlowData.reduce((sum, t) => t.type === 'income' ? sum + t.amount : sum, 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                                     </Typography>
                                 </Paper>
                             </Grid>
@@ -339,7 +435,7 @@ function CashFlowManagement() {
                                 <Paper elevation={3} sx={{ p: 2, textAlign: 'center' }}>
                                     <Typography variant="subtitle1">Total Expenses</Typography>
                                     <Typography variant="h5" color={CHART_COLORS.expense}>
-                                        {cashFlowData.reduce((sum, t) => t.type === 'expense' ? sum + parseFloat(t.amount) : sum, 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                        {cashFlowData.reduce((sum, t) => t.type === 'expense' ? sum + t.amount : sum, 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                                     </Typography>
                                 </Paper>
                             </Grid>
@@ -347,7 +443,7 @@ function CashFlowManagement() {
                                 <Paper elevation={3} sx={{ p: 2, textAlign: 'center' }}>
                                     <Typography variant="subtitle1">Net Cash Flow</Typography>
                                     <Typography variant="h5" color={CHART_COLORS.cashFlow}>
-                                        {(cashFlowData.reduce((sum, t) => t.type === 'income' ? sum + parseFloat(t.amount) : sum - parseFloat(t.amount), 0)).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                        {(cashFlowData.reduce((sum, t) => t.type === 'income' ? sum + t.amount : sum - t.amount, 0)).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                                     </Typography>
                                 </Paper>
                             </Grid>
@@ -356,8 +452,8 @@ function CashFlowManagement() {
                                     <Typography variant="subtitle1">Cash Flow Ratio</Typography>
                                     <Typography variant="h5" color={theme.palette.text.primary}>
                                         {(() => {
-                                            const income = cashFlowData.reduce((sum, t) => t.type === 'income' ? sum + parseFloat(t.amount) : sum, 0);
-                                            const expenses = cashFlowData.reduce((sum, t) => t.type === 'expense' ? sum + parseFloat(t.amount) : sum, 0);
+                                            const income = cashFlowData.reduce((sum, t) => t.type === 'income' ? sum + t.amount : sum, 0);
+                                            const expenses = cashFlowData.reduce((sum, t) => t.type === 'expense' ? sum + t.amount : sum, 0);
                                             return expenses !== 0 ? (income / expenses).toFixed(2) : 'N/A';
                                         })()}
                                     </Typography>
@@ -367,6 +463,44 @@ function CashFlowManagement() {
                     </Paper>
                 </Grid>
             </Grid>
+            <Dialog
+                open={deleteConfirmOpen}
+                onClose={closeDeleteConfirm}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">{"Confirm Delete"}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                        Are you sure you want to delete this transaction? This action cannot be undone.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={closeDeleteConfirm} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={deleteTransaction} color="primary" autoFocus>
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            <Snackbar
+                anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                }}
+                open={snackbarOpen}
+                autoHideDuration={6000}
+                onClose={closeSnackbar}
+                message={snackbarMessage}
+                action={
+                    <React.Fragment>
+                        <IconButton size="small" aria-label="close" color="inherit" onClick={closeSnackbar}>
+                            <X />
+                        </IconButton>
+                    </React.Fragment>
+                }
+            />
         </Box>
     );
 }
