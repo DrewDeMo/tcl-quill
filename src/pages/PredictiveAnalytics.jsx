@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Paper, Grid, CircularProgress, Box, TextField, Button, useTheme } from '@mui/material';
+import { Typography, Paper, Grid, CircularProgress, Box, TextField, Button, useTheme, Slider, FormControlLabel, Switch } from '@mui/material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import * as tf from '@tensorflow/tfjs';
-import { TrendingUp, RefreshCw } from 'react-feather';
+import { TrendingUp, RefreshCw, Sliders } from 'react-feather';
 
 const CHART_COLORS = {
     income: '#66BB6A',
     expense: '#EF5350',
     profit: '#42A5F5',
+    scenario1: '#FFA726',
+    scenario2: '#BA68C8',
 };
 
 function PredictiveAnalytics() {
@@ -22,6 +24,11 @@ function PredictiveAnalytics() {
     const [error, setError] = useState(null);
     const [predictionMonths, setPredictionMonths] = useState(12);
     const [model, setModel] = useState(null);
+    const [growthRate, setGrowthRate] = useState(5);
+    const [inflationRate, setInflationRate] = useState(2);
+    const [showScenarios, setShowScenarios] = useState(false);
+    const [scenario1, setScenario1] = useState({ growthRate: 7, inflationRate: 3 });
+    const [scenario2, setScenario2] = useState({ growthRate: 3, inflationRate: 4 });
 
     useEffect(() => {
         const loadData = async () => {
@@ -74,7 +81,7 @@ function PredictiveAnalytics() {
         setModel({ income: incomeModel, expense: expenseModel });
     };
 
-    const generatePredictions = async () => {
+    const generatePredictions = async (customGrowthRate = growthRate, customInflationRate = inflationRate) => {
         if (!model) return;
 
         const lastIncome = parseFloat(data[data.length - 1]['Total Income']);
@@ -83,8 +90,8 @@ function PredictiveAnalytics() {
         const predictedData = [];
 
         for (let i = 1; i <= predictionMonths; i++) {
-            const incomeInput = tf.tensor2d([lastIncome + i], [1, 1]);
-            const expenseInput = tf.tensor2d([lastExpense + i], [1, 1]);
+            const incomeInput = tf.tensor2d([lastIncome * (1 + customGrowthRate / 100) ** i], [1, 1]);
+            const expenseInput = tf.tensor2d([lastExpense * (1 + customInflationRate / 100) ** i], [1, 1]);
 
             const predictedIncome = model.income.predict(incomeInput).dataSync()[0];
             const predictedExpense = model.expense.predict(expenseInput).dataSync()[0];
@@ -92,13 +99,30 @@ function PredictiveAnalytics() {
 
             predictedData.push({
                 Month: `Month ${data.length + i}`,
-                'Total Income': predictedIncome.toFixed(2),
-                'Total Expense': predictedExpense.toFixed(2),
-                'Net Income': predictedProfit.toFixed(2),
+                'Total Income': predictedIncome,
+                'Total Expense': predictedExpense,
+                'Net Income': predictedProfit,
             });
         }
 
-        setPredictions(predictedData);
+        return predictedData;
+    };
+
+    const handleGeneratePredictions = async () => {
+        const baseScenario = await generatePredictions();
+        let scenario1Data = [];
+        let scenario2Data = [];
+
+        if (showScenarios) {
+            scenario1Data = await generatePredictions(scenario1.growthRate, scenario1.inflationRate);
+            scenario2Data = await generatePredictions(scenario2.growthRate, scenario2.inflationRate);
+        }
+
+        setPredictions({
+            baseScenario,
+            scenario1: scenario1Data,
+            scenario2: scenario2Data,
+        });
     };
 
     const handlePredictionMonthsChange = (event) => {
@@ -161,11 +185,90 @@ function PredictiveAnalytics() {
                         />
                     </Grid>
                     <Grid item xs={12} sm={6} md={3}>
-                        <Button variant="contained" color="primary" onClick={generatePredictions} startIcon={<RefreshCw />} fullWidth>
+                        <Typography gutterBottom>Growth Rate (%)</Typography>
+                        <Slider
+                            value={growthRate}
+                            onChange={(e, newValue) => setGrowthRate(newValue)}
+                            aria-labelledby="growth-rate-slider"
+                            valueLabelDisplay="auto"
+                            step={0.1}
+                            marks
+                            min={0}
+                            max={10}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <Typography gutterBottom>Inflation Rate (%)</Typography>
+                        <Slider
+                            value={inflationRate}
+                            onChange={(e, newValue) => setInflationRate(newValue)}
+                            aria-labelledby="inflation-rate-slider"
+                            valueLabelDisplay="auto"
+                            step={0.1}
+                            marks
+                            min={0}
+                            max={10}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={3}>
+                        <Button variant="contained" color="primary" onClick={handleGeneratePredictions} startIcon={<RefreshCw />} fullWidth>
                             Generate Predictions
                         </Button>
                     </Grid>
                 </Grid>
+                <Box sx={{ mt: 2 }}>
+                    <FormControlLabel
+                        control={
+                            <Switch
+                                checked={showScenarios}
+                                onChange={(e) => setShowScenarios(e.target.checked)}
+                                name="showScenarios"
+                                color="primary"
+                            />
+                        }
+                        label="Show Alternative Scenarios"
+                    />
+                </Box>
+                {showScenarios && (
+                    <Grid container spacing={3} sx={{ mt: 2 }}>
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="subtitle1" gutterBottom>Scenario 1</Typography>
+                            <TextField
+                                label="Growth Rate"
+                                type="number"
+                                value={scenario1.growthRate}
+                                onChange={(e) => setScenario1({ ...scenario1, growthRate: parseFloat(e.target.value) })}
+                                InputProps={{ inputProps: { min: 0, max: 20, step: 0.1 } }}
+                                sx={{ mr: 2 }}
+                            />
+                            <TextField
+                                label="Inflation Rate"
+                                type="number"
+                                value={scenario1.inflationRate}
+                                onChange={(e) => setScenario1({ ...scenario1, inflationRate: parseFloat(e.target.value) })}
+                                InputProps={{ inputProps: { min: 0, max: 20, step: 0.1 } }}
+                            />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <Typography variant="subtitle1" gutterBottom>Scenario 2</Typography>
+                            <TextField
+                                label="Growth Rate"
+                                type="number"
+                                value={scenario2.growthRate}
+                                onChange={(e) => setScenario2({ ...scenario2, growthRate: parseFloat(e.target.value) })}
+                                InputProps={{ inputProps: { min: 0, max: 20, step: 0.1 } }}
+                                sx={{ mr: 2 }}
+                            />
+                            <TextField
+                                label="Inflation Rate"
+                                type="number"
+                                value={scenario2.inflationRate}
+                                onChange={(e) => setScenario2({ ...scenario2, inflationRate: parseFloat(e.target.value) })}
+                                InputProps={{ inputProps: { min: 0, max: 20, step: 0.1 } }}
+                            />
+                        </Grid>
+                    </Grid>
+                )}
             </Paper>
             <Grid container spacing={4}>
                 <Grid item xs={12}>
@@ -174,7 +277,7 @@ function PredictiveAnalytics() {
                             Financial Predictions
                         </Typography>
                         <ResponsiveContainer width="100%" height={400}>
-                            <LineChart data={[...data, ...predictions]}>
+                            <LineChart data={[...data, ...(predictions.baseScenario || [])]}>
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis dataKey="Month" />
                                 <YAxis />
@@ -183,6 +286,12 @@ function PredictiveAnalytics() {
                                 <Line type="monotone" dataKey="Total Income" stroke={CHART_COLORS.income} />
                                 <Line type="monotone" dataKey="Total Expense" stroke={CHART_COLORS.expense} />
                                 <Line type="monotone" dataKey="Net Income" stroke={CHART_COLORS.profit} />
+                                {showScenarios && predictions.scenario1 && (
+                                    <Line type="monotone" dataKey="Net Income" data={[...data, ...predictions.scenario1]} stroke={CHART_COLORS.scenario1} name="Scenario 1" />
+                                )}
+                                {showScenarios && predictions.scenario2 && (
+                                    <Line type="monotone" dataKey="Net Income" data={[...data, ...predictions.scenario2]} stroke={CHART_COLORS.scenario2} name="Scenario 2" />
+                                )}
                             </LineChart>
                         </ResponsiveContainer>
                     </Paper>
